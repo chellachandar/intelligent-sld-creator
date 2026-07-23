@@ -152,11 +152,11 @@ with st.sidebar:
 
     with col1:
         line_bay_count = st.number_input(
-            "Line Bays",
+            "OHL Line Bays",
             min_value=0,
             max_value=20,
             value=4,
-            help="Number of transmission/distribution line bays"
+            help="Overhead line bays (gantry termination)"
         )
 
     with col2:
@@ -176,6 +176,14 @@ with st.sidebar:
             value=1,
             help="Number of shunt reactor bays"
         )
+
+    cable_bay_count = st.number_input(
+        "Cable Feeder Bays",
+        min_value=0,
+        max_value=20,
+        value=0,
+        help="Line bays terminating in cable sealing ends"
+    )
 
     bus_coupler_count = st.number_input(
         "Bus Couplers",
@@ -259,6 +267,7 @@ with tab1:
                     lv_voltage=float(lv_voltage) if lv_voltage else None,
                     configuration=configuration,
                     line_bay_count=line_bay_count,
+                    cable_bay_count=cable_bay_count,
                     transformer_bay_count=transformer_bay_count,
                     reactor_bay_count=reactor_bay_count,
                     bus_coupler_count=bus_coupler_count,

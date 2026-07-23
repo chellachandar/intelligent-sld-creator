@@ -175,10 +175,12 @@ class SLDGenerationParams:
     lv_voltage: Optional[float] = None
     configuration: str = 'double_bus_coupler'
     line_bay_count: int = 0
+    cable_bay_count: int = 0
     transformer_bay_count: int = 0
     reactor_bay_count: int = 0
     bus_coupler_count: int = 1
     line_names: List[str] = None
+    cable_names: List[str] = None
     transformer_names: List[str] = None
     reactor_names: List[str] = None
     title_text: str = "POWERGRID CORPORATION OF INDIA LTD"
@@ -187,6 +189,7 @@ class SLDGenerationParams:
 
     def __post_init__(self):
         self.line_names = self.line_names or []
+        self.cable_names = self.cable_names or []
         self.transformer_names = self.transformer_names or []
         self.reactor_names = self.reactor_names or []
 
@@ -232,9 +235,15 @@ class SLDRenderer:
         p = self.params
         base = self._num_prefix() * 100
         numbered = []
+        odd = 1
         for i in range(p.line_bay_count):
-            numbered.append(('line', base + 2 * i + 1,
+            numbered.append(('line', base + odd,
                              self._name(p.line_names, i, f"LINE-{i + 1}")))
+            odd += 2
+        for i in range(p.cable_bay_count):
+            numbered.append(('cable', base + odd,
+                             self._name(p.cable_names, i, f"CABLE-{i + 1}")))
+            odd += 2
         for i in range(p.transformer_bay_count):
             numbered.append(('ict', base + 2 * i + 2,
                              self._name(p.transformer_names, i, f"ICT-{i + 1}")))
@@ -306,7 +315,25 @@ class SLDRenderer:
         D.draw_cvt(ax, x + 0.25, y - 7, f"{num}CVT", fs)
         D.draw_la(ax, x + 0.25, y - 8.5, f"{num}LA", fs)
         D.la_comp(ax, x - 0.25, y - 8.7)
-        D.draw_symbol(ax, x + 0.25, y - 10.5, "", fs)
+        D.draw_gantry(ax, x + 0.25, y - 10.5, "", fs)
+        D.draw_symbol(ax, x + 0.25, y - 11.0, "", fs)
+        self.components_count += 8
+        self._bay_label(ax, x, num, name)
+
+    def _bay_cable(self, ax, x, num, name):
+        """Cable feeder: as line bay but no WT, ends in cable sealing end."""
+        y, fs = self.bay_y, self.fs
+        self._bay_top(ax, x, num)
+        ax.plot([x + .25, x + .25], [y - 2.7, y - 4.5], color='red', linewidth=LW)
+        D.draw_ct(ax, x + 0.25, y - 3.4, f"{num}CT", fs)
+        D.earth_sh(ax, x + 0.25, y - 3.7, f"{num}89BE", fs)
+        D.draw_isolator(ax, x + 0.25, y - 4.7, f"{num}89L", fs)
+        D.earth_sh(ax, x + 0.25, y - 4.85, f"{num}89LE", fs)
+        ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 10.3], color='red', linewidth=LW)
+        D.draw_cvt(ax, x + 0.25, y - 7, f"{num}CVT", fs)
+        D.draw_la(ax, x + 0.25, y - 8.5, f"{num}LA", fs)
+        D.la_comp(ax, x - 0.25, y - 8.7)
+        D.draw_cable_termination(ax, x + 0.25, y - 10.3, "CABLE", fs)
         self.components_count += 7
         self._bay_label(ax, x, num, name)
 
@@ -325,8 +352,8 @@ class SLDRenderer:
         ratio = ""
         if self.is_dual_voltage:
             ratio = f"\n{int(p.hv_voltage)}/{int(p.lv_voltage)}kV"
-        D.draw_ict(ax, x + 0.25, y - 8, f"{num}ICT{ratio}", fs)
-        ax.plot([x + 0.25, x + 0.25], [y - 9, y - 10.1], color='red', linewidth=LW)
+        D.draw_ict3(ax, x + 0.25, y - 8.1, f"{num}ICT{ratio}", fs)
+        ax.plot([x + 0.25, x + 0.25], [y - 8.75, y - 10.1], color='red', linewidth=LW)
         D.draw_symbol(ax, x + 0.25, y - 10.2, "", fs)
         if self.is_dual_voltage:
             ax.text(x + 0.25, y - 10.75, f"TO {int(p.lv_voltage)}kV",
@@ -346,8 +373,10 @@ class SLDRenderer:
         D.draw_la(ax, x + 0.25, y - 6.6, f"{num}LA", fs)
         D.la_comp(ax, x - 0.25, y - 6.8)
         D.draw_reacter(ax, x + 0.25, y - 8, f"{num}R", fs)
-        ax.plot([x + 0.25, x + 0.25], [y - 9, y - 10.1], color='red', linewidth=LW)
-        D.draw_earth_symbol(ax, x + 0.25, y - 10.2, "", fs)
+        ax.plot([x + 0.25, x + 0.25], [y - 9, y - 9.55], color='red', linewidth=LW)
+        D.draw_ngr(ax, x + 0.25, y - 9.6, fs)
+        ax.plot([x + 0.25, x + 0.25], [y - 9.95, y - 10.15], color='red', linewidth=LW)
+        D.draw_earth_symbol(ax, x + 0.25, y - 10.25, "", fs)
         self.components_count += 6
         self._bay_label(ax, x, num, name)
 
@@ -362,10 +391,30 @@ class SLDRenderer:
         D.draw_isolator(ax, x + .7, y - .3, f"{pref}0089B", fs)
         D.earth_sh(ax, x - .2, y - .5, f"{pref}0089AE", fs)
         D.earth_sh(ax, x + .7, y - .5, f"{pref}0089BE", fs)
-        D.draw_ct(ax, x - .2, y - 2.5, f"{pref}00CT", fs)
+        D.draw_ct(ax, x - .2, y - 2.5, f"{pref}00CT1", fs)
+        D.draw_ct(ax, x + .7, y - 2.5, f"{pref}00CT2", fs)
         D.draw_breaker_coupler(ax, x + 0.25, y - 4, f"{pref}0052", fs)
-        self.components_count += 6
+        self.components_count += 7
         ax.text(x + .25, y - 11.4, name, ha='center', va='top', fontsize=fs + 1)
+
+    # ------------------------------------------------------------------
+    def _draw_bus_aux(self, ax):
+        """Bus VT (isolator + WT) and bus earth switch on each bus,
+        drawn in the left margin before the first bay."""
+        fs = self.fs
+        hv = int(self.params.hv_voltage)
+
+        def one(xb, yb, tag):
+            ax.plot([xb, xb], [yb, yb - 0.4], color='red', linewidth=LW)
+            D.draw_isolator(ax, xb, yb - 0.4, f"{tag}-89V", fs)
+            D.earth_sh(ax, xb, yb - 0.6, f"{tag}-89E", fs)
+            ax.plot([xb, xb], [yb - 1.6, yb - 1.8], color='red', linewidth=LW)
+            D.draw_wt(ax, xb, yb - 2.0, f"{tag} VT", fs)
+            self.components_count += 3
+
+        one(2.4, self.bus1_y, "B1")
+        if self.is_double:
+            one(3.7, self.bus2_y, "B2")
 
     # ------------------------------------------------------------------
     def _draw_buses(self, ax, n_bays):
@@ -410,11 +459,14 @@ class SLDRenderer:
         ax = self.ax
 
         x_end = self._draw_buses(ax, n)
+        self._draw_bus_aux(ax)
 
         for idx, (btype, num, name) in enumerate(bays):
             x = self.x_start + idx * self.gap
             if btype == 'line':
                 self._bay_line(ax, x, num, name)
+            elif btype == 'cable':
+                self._bay_cable(ax, x, num, name)
             elif btype == 'ict':
                 self._bay_ict(ax, x, num, name)
             elif btype == 'reactor':

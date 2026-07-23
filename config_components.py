@@ -190,6 +190,54 @@ class ComponentDrawer:
                          angle=0, theta1=60, theta2=280, color='red', linewidth=LW))
         ax.text(x - .45, y - .8, label, fontsize=fs, ha='center')
 
+    @staticmethod
+    def draw_ict3(ax, x, y, label, fs):
+        """3-winding autotransformer (HV+LV overlapping, tertiary, earthed
+        neutral) — matches reference ICT symbol."""
+        ax.add_patch(Arc((x, y), width=0.5, height=0.5,
+                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+        ax.add_patch(Arc((x, y - 0.3), width=0.5, height=0.5,
+                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+        ax.add_patch(Arc((x + 0.4, y - 0.15), width=0.26, height=0.26,
+                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+        # earthed neutral (left)
+        ax.plot([x - 0.25, x - 0.55], [y - 0.15, y - 0.15], color='green', linewidth=LW)
+        ax.plot([x - 0.55, x - 0.55], [y - 0.15, y - 0.3], color='green', linewidth=LW)
+        ComponentDrawer.draw_earth_symbol(ax, x - 0.55, y - 0.42, "", fs)
+        ax.text(x - 0.35, y + 0.32, label, fontsize=fs, ha='right')
+
+    @staticmethod
+    def draw_ngr(ax, x, y, fs):
+        """Neutral grounding reactor (small 2-turn coil)."""
+        ax.add_patch(Arc((x, y - .05), width=0.14, height=0.24,
+                         angle=0, theta1=60, theta2=300, color='red', linewidth=LW))
+        ax.add_patch(Arc((x, y - .25), width=0.14, height=0.24,
+                         angle=0, theta1=60, theta2=280, color='red', linewidth=LW))
+        ax.text(x + .18, y - .15, "NGR", fontsize=fs, ha='left')
+
+    @staticmethod
+    def draw_gantry(ax, x, y, label, fs):
+        """OHL termination gantry (beam + legs + X-brace)."""
+        ax.plot([x, x], [y + .12, y], color='red', linewidth=LW)
+        ax.plot([x - .3, x + .3], [y, y], color='red', linewidth=LW)
+        ax.plot([x - .25, x - .25], [y, y - .35], color='red', linewidth=LW)
+        ax.plot([x + .25, x + .25], [y, y - .35], color='red', linewidth=LW)
+        ax.plot([x - .25, x + .25], [y, y - .35], color='red', linewidth=LW)
+        ax.plot([x + .25, x - .25], [y, y - .35], color='red', linewidth=LW)
+        if label:
+            ax.text(x + .4, y - .15, label, fontsize=fs, ha='left')
+
+    @staticmethod
+    def draw_cable_termination(ax, x, y, label, fs):
+        """Cable sealing end: cone + cable tail with hook."""
+        ax.add_patch(Polygon([[x - 0.1, y], [x + 0.1, y], [x, y - 0.4]],
+                             closed=True, fill=False, edgecolor='red', linewidth=LW))
+        ax.plot([x, x], [y - .4, y - .7], color='red', linewidth=LW)
+        ax.add_patch(Arc((x + 0.08, y - 0.7), width=0.16, height=0.16,
+                         angle=0, theta1=180, theta2=270, color='red', linewidth=LW))
+        if label:
+            ax.text(x + .2, y - .3, label, fontsize=fs, ha='left')
+
     # ---------------- TERMINATIONS ----------------
     @staticmethod
     def draw_symbol(ax, x, y, label, fs):
