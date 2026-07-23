@@ -1,454 +1,222 @@
 """
-GLOBAL COMPONENT LIBRARY
-====================================
-Defines all electrical components used in SLD generation.
-Each component is defined once, used everywhere.
+GLOBAL COMPONENT LIBRARY (v2)
+=============================
+All electrical symbols defined ONCE, reused by every bay type, every
+configuration, every voltage. Geometry ported from the proven original
+Final_DXF.py engine (YELAHANKA reference output).
+
+Colors use NAMED values (red/green/blue/black) so the DXF exporter maps
+them to exact AutoCAD colors.
 """
 
 from dataclasses import dataclass
-from typing import Tuple, Dict, Any
-import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Polygon, Arc
-import math
 
-# ============================================================================
-# COMPONENT BASE CLASS
-# ============================================================================
+# Global stroke weights
+LW = 0.9        # symbol line width
+BUS_LW = 2.2    # bus bar line width
+
 
 @dataclass
 class ComponentProperties:
-    """Properties for any electrical component"""
+    """Metadata for a component (for docs/UI listings)."""
     name: str
-    symbol_type: str  # 'isolator', 'breaker', 'ct', 'vt', 'la', 'reactor', etc.
-    height: float = 0.8  # units
-    width: float = 0.3
-    label_offset_x: float = 0.3
-    label_offset_y: float = 0.2
-    line_color: str = 'red'
-    fill_color: str = 'none'
-    line_width: float = 0.5
+    symbol_type: str
     description: str = ""
 
 
-# ============================================================================
-# COMPONENT DEFINITIONS (GLOBAL)
-# ============================================================================
+COMPONENT_CATALOG = [
+    ComponentProperties("Isolator", "isolator", "Disconnector 89A/89B/89L/89T/89R"),
+    ComponentProperties("Horizontal Isolator", "isolator_h", "Bus sectionalizer isolator"),
+    ComponentProperties("Circuit Breaker", "breaker", "52"),
+    ComponentProperties("Bus Coupler Breaker", "breaker_coupler", "52BC"),
+    ComponentProperties("Earth Switch", "earth_switch", "89AE/89BE/89LE"),
+    ComponentProperties("Current Transformer", "ct", "CT"),
+    ComponentProperties("Voltage Transformer", "wt", "WT"),
+    ComponentProperties("Capacitive VT", "cvt", "CVT"),
+    ComponentProperties("Lightning Arrester", "la", "LA"),
+    ComponentProperties("Interconnecting Transformer", "ict", "ICT"),
+    ComponentProperties("Shunt Reactor", "reactor", "Reactor"),
+    ComponentProperties("Earth Symbol", "earth", "Grounding"),
+    ComponentProperties("Line Arrow", "symbol", "Feeder termination"),
+]
 
-class ComponentLibrary:
-    """Global repository of all electrical components"""
-
-    # ---- ISOLATOR (Disconnector) ----
-    ISOLATOR = ComponentProperties(
-        name="Isolator",
-        symbol_type="isolator",
-        height=0.8,
-        width=0.2,
-        label_offset_x=0.25,
-        label_offset_y=-0.3,
-        line_color='red',
-        line_width=0.5,
-        description="Isolator/Disconnector (89A, 89B, 89C, 89D)"
-    )
-
-    # ---- CIRCUIT BREAKER ----
-    BREAKER = ComponentProperties(
-        name="Breaker",
-        symbol_type="breaker",
-        height=0.4,
-        width=0.2,
-        label_offset_x=0.3,
-        label_offset_y=0.0,
-        line_color='black',
-        line_width=0.5,
-        description="Circuit Breaker (52)"
-    )
-
-    # ---- BREAKER (Horizontal for Coupler) ----
-    BREAKER_COUPLER = ComponentProperties(
-        name="Breaker Coupler",
-        symbol_type="breaker_coupler",
-        height=0.2,
-        width=0.4,
-        label_offset_x=0.0,
-        label_offset_y=0.4,
-        line_color='red',
-        line_width=0.5,
-        description="Bus Coupler Breaker"
-    )
-
-    # ---- CURRENT TRANSFORMER (CT) ----
-    CT = ComponentProperties(
-        name="CT",
-        symbol_type="ct",
-        height=0.6,
-        width=0.2,
-        label_offset_x=-0.3,
-        label_offset_y=0.0,
-        line_color='blue',
-        line_width=0.5,
-        description="Current Transformer (CT, ACT, BCT)"
-    )
-
-    # ---- VOLTAGE TRANSFORMER (WT) ----
-    WT = ComponentProperties(
-        name="WT",
-        symbol_type="wt",
-        height=0.4,
-        width=0.1,
-        label_offset_x=-0.3,
-        label_offset_y=0.0,
-        line_color='red',
-        line_width=0.5,
-        description="Voltage Transformer (WT)"
-    )
-
-    # ---- CAPACITIVE VOLTAGE TRANSFORMER (CVT) ----
-    CVT = ComponentProperties(
-        name="CVT",
-        symbol_type="cvt",
-        height=1.5,  # Complex symbol, taller
-        width=0.4,
-        label_offset_x=0.4,
-        label_offset_y=-0.3,
-        line_color='red',
-        line_width=0.5,
-        description="Capacitive Voltage Transformer (CVT)"
-    )
-
-    # ---- LIGHTNING ARRESTER (LA) ----
-    LA = ComponentProperties(
-        name="LA",
-        symbol_type="la",
-        height=0.3,
-        width=0.3,
-        label_offset_x=-0.5,
-        label_offset_y=-0.4,
-        line_color='green',
-        line_width=0.5,
-        description="Lightning Arrester (LA)"
-    )
-
-    # ---- REACTOR (Shunt Reactor) ----
-    REACTOR = ComponentProperties(
-        name="Reactor",
-        symbol_type="reactor",
-        height=0.6,
-        width=0.2,
-        label_offset_x=-0.45,
-        label_offset_y=-0.8,
-        line_color='red',
-        line_width=0.5,
-        description="Shunt Reactor"
-    )
-
-    # ---- POWER TRANSFORMER (for transformer bays) ----
-    POWER_TRANSFORMER = ComponentProperties(
-        name="Power Transformer",
-        symbol_type="power_transformer",
-        height=1.2,
-        width=0.8,
-        label_offset_x=-0.5,
-        label_offset_y=-0.8,
-        line_color='red',
-        line_width=0.5,
-        description="Power Transformer (3-winding shown)"
-    )
-
-    # ---- EARTH/GROUNDING SWITCH ----
-    EARTH_SWITCH = ComponentProperties(
-        name="Earth Switch",
-        symbol_type="earth_switch",
-        height=0.5,
-        width=0.2,
-        label_offset_x=0.25,
-        label_offset_y=-0.3,
-        line_color='red',
-        line_width=0.5,
-        description="Earth/Grounding Switch (89E, 89AE)"
-    )
-
-    # ---- EARTH/GROUNDING SYMBOL ----
-    EARTH_SYMBOL = ComponentProperties(
-        name="Earth Symbol",
-        symbol_type="earth_symbol",
-        height=0.3,
-        width=0.25,
-        label_offset_x=0.0,
-        label_offset_y=-0.5,
-        line_color='green',
-        line_width=0.5,
-        description="Ground/Earth (GND)"
-    )
-
-
-# ============================================================================
-# COMPONENT DRAWING FUNCTIONS
-# ============================================================================
 
 class ComponentDrawer:
-    """Draws individual components on matplotlib axes"""
+    """All symbol drawing functions (global, reusable, proven geometry)."""
+
+    # ---------------- BREAKERS ----------------
+    @staticmethod
+    def draw_breaker(ax, x, y, label, fs):
+        ax.add_patch(Rectangle((x - 0.1, y - 0.2), 0.2, 0.4, fill=False,
+                               edgecolor='black', linewidth=LW))
+        ax.plot([x, x], [y + .2, y + 1], color='red', linewidth=LW)
+        ax.plot([x, x], [y - .2, y - 1], color='red', linewidth=LW)
+        ax.text(x + .25, y, label, fontsize=fs, ha='left', va='center')
 
     @staticmethod
-    def draw_isolator(ax, x: float, y: float, label: str = "", props: ComponentProperties = None):
-        """Draw isolator symbol (two circles + diagonal break line)"""
-        if props is None:
-            props = ComponentLibrary.ISOLATOR
+    def draw_breaker_coupler(ax, x, y, label, fs):
+        ax.add_patch(Rectangle((x - 0.1, y - 0.2), 0.2, 0.4, fill=False,
+                               edgecolor='black', linewidth=LW))
+        ax.plot([x - .45, x - .1], [y, y], color='red', linewidth=LW)
+        ax.plot([x + .1, x + .45], [y, y], color='red', linewidth=LW)
+        ax.text(x, y + .45, label, fontsize=fs, ha='center')
 
-        # Two circles
-        circle1_y = y + 0.2
-        circle2_y = y - 0.2
-        ax.plot([x, x], [circle1_y - 0.1, circle1_y + 0.1],
-                color=props.line_color, linewidth=props.line_width)
-        ax.plot([x, x], [circle2_y - 0.1, circle2_y + 0.1],
-                color=props.line_color, linewidth=props.line_width)
-
-        # Diagonal break line
-        ax.plot([x - 0.05, x + 0.05], [circle1_y - 0.15, circle2_y + 0.15],
-                color=props.line_color, linewidth=props.line_width)
-
-        # Vertical connections
-        ax.plot([x, x], [y + 0.4, circle1_y + 0.1],
-                color=props.line_color, linewidth=props.line_width)
-        ax.plot([x, x], [circle2_y - 0.1, y - 1.2],
-                color=props.line_color, linewidth=props.line_width)
-
-        if label:
-            ax.text(x + props.label_offset_x, y + props.label_offset_y, label,
-                   fontsize=9, ha='center', color=props.line_color)
+    # ---------------- ISOLATORS ----------------
+    @staticmethod
+    def draw_isolator(ax, x, y, label, fs):
+        """Vertical isolator: stub, two contact circles, open blade, stub."""
+        ax.plot([x, x], [y - .12, y + .4], color='red', linewidth=LW)
+        ax.text(x + .12, y - .32, label, fontsize=fs, ha='left')
+        ax.add_patch(Arc((x, y - 0.15), width=0.05, height=0.1,
+                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+        ax.add_patch(Arc((x, y - 0.65), width=0.05, height=0.1,
+                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+        ax.plot([x - .06, x + .06], [y - .58, y - .22], color='red', linewidth=LW)
+        ax.plot([x, x], [y - .7, y - 1.2], color='red', linewidth=LW)
 
     @staticmethod
-    def draw_breaker(ax, x: float, y: float, label: str = "", props: ComponentProperties = None):
-        """Draw circuit breaker symbol (rectangle with connections)"""
-        if props is None:
-            props = ComponentLibrary.BREAKER
+    def draw_isolator_h(ax, x, y, label, fs):
+        """Horizontal isolator (bus sectionalizer)."""
+        ax.add_patch(Arc((x - 0.25, y), width=0.1, height=0.05,
+                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+        ax.add_patch(Arc((x + 0.25, y), width=0.1, height=0.05,
+                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+        ax.plot([x - .2, x + .15], [y, y + .25], color='red', linewidth=LW)
+        ax.text(x, y + .35, label, fontsize=fs, ha='center')
 
-        # Rectangle
-        rect = Rectangle((x - props.width/2, y - props.height/2),
-                        props.width, props.height,
-                        fill=False, edgecolor=props.line_color,
-                        linewidth=props.line_width)
-        ax.add_patch(rect)
-
-        # Vertical connections
-        ax.plot([x, x], [y + props.height/2, y + 1],
-                color=props.line_color, linewidth=props.line_width)
-        ax.plot([x, x], [y - props.height/2, y - 1],
-                color=props.line_color, linewidth=props.line_width)
-
-        if label:
-            ax.text(x + props.label_offset_x, y + props.label_offset_y, label,
-                   fontsize=9, ha='center', color=props.line_color)
-
+    # ---------------- EARTH SWITCH ----------------
     @staticmethod
-    def draw_breaker_coupler(ax, x: float, y: float, label: str = "", props: ComponentProperties = None):
-        """Draw horizontal bus coupler breaker"""
-        if props is None:
-            props = ComponentLibrary.BREAKER_COUPLER
+    def earth_sh(ax, x, y, label, fs):
+        """Earth switch hanging left of a point on the stem."""
+        y = y - .2
+        ax.plot([x, x - .2], [y - .6, y - .6], color='red', linewidth=LW)
+        ax.add_patch(Arc((x - .2, y - .45 - 0.15), width=0.05, height=0.1,
+                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+        ax.add_patch(Arc((x - .35, y - .45 - 0.15), width=0.05, height=0.1,
+                         angle=0, theta1=0, theta2=360, color='green', linewidth=LW))
+        ax.plot([x - .2, x - .35], [y - .35, y - .6], color='green', linewidth=LW)
+        ax.plot([x - .35, x - .5], [y - .6, y - .6], color='green', linewidth=LW)
+        ax.plot([x - .5, x - .5], [y - .45, y - .75], color='green', linewidth=LW)
+        ax.plot([x - .55, x - .55], [y - .5, y - .7], color='green', linewidth=LW)
+        ax.plot([x - .6, x - .6], [y - .55, y - .65], color='green', linewidth=LW)
+        ax.text(x - .42, y - .3, label, fontsize=fs, ha='center')
 
-        # Horizontal rectangle
-        rect = Rectangle((x - props.width/2, y - props.height/2),
-                        props.width, props.height,
-                        fill=False, edgecolor=props.line_color,
-                        linewidth=props.line_width)
-        ax.add_patch(rect)
-
-        # Horizontal connections
-        ax.plot([x - props.width/2 - 0.4, x - props.width/2], [y, y],
-                color=props.line_color, linewidth=props.line_width)
-        ax.plot([x + props.width/2, x + props.width/2 + 0.4], [y, y],
-                color=props.line_color, linewidth=props.line_width)
-
-        if label:
-            ax.text(x, y + props.label_offset_y, label,
-                   fontsize=9, ha='center', color=props.line_color)
-
+    # ---------------- INSTRUMENT TRANSFORMERS ----------------
     @staticmethod
-    def draw_ct(ax, x: float, y: float, label: str = "", props: ComponentProperties = None):
-        """Draw Current Transformer (two semicircles)"""
-        if props is None:
-            props = ComponentLibrary.CT
-
+    def draw_ct(ax, x, y, label, fs):
         spacing = 0.75
-
-        # Upper semicircle
-        arc1 = Arc((x + 0.03, y - spacing/4), width=0.2, height=0.4,
-                  angle=0, theta1=80, theta2=280,
-                  color=props.line_color, linewidth=props.line_width)
-        ax.add_patch(arc1)
-
-        # Lower semicircle
-        arc2 = Arc((x + 0.03, y + spacing/4), width=0.2, height=0.4,
-                  angle=0, theta1=80, theta2=280,
-                  color=props.line_color, linewidth=props.line_width)
-        ax.add_patch(arc2)
-
-        # Vertical connections
-        ax.plot([x, x], [y + 0.5, y - 0.5],
-                color=props.line_color, linewidth=props.line_width)
-
-        if label:
-            ax.text(x + props.label_offset_x, y + props.label_offset_y, label,
-                   fontsize=9, ha='center', color=props.line_color)
+        ax.add_patch(Arc((x + .03, y - spacing / 4), width=0.2, height=0.4,
+                         angle=0, theta1=80, theta2=280, color='blue', linewidth=LW))
+        ax.add_patch(Arc((x + .03, y + spacing / 4), width=0.2, height=0.4,
+                         angle=0, theta1=80, theta2=280, color='blue', linewidth=LW))
+        ax.text(x - .15, y, label, fontsize=fs, ha='right', va='center')
 
     @staticmethod
-    def draw_wt(ax, x: float, y: float, label: str = "", props: ComponentProperties = None):
-        """Draw Voltage Transformer (arc + line)"""
-        if props is None:
-            props = ComponentLibrary.WT
-
-        # Arc
-        arc = Arc((x, y - 0.15), width=0.2, height=0.4,
-                 angle=0, theta1=90, theta2=360,
-                 color=props.line_color, linewidth=props.line_width)
-        ax.add_patch(arc)
-
-        # Horizontal line
-        ax.plot([x, x + 0.1], [y - 0.15, y - 0.15],
-                color=props.line_color, linewidth=props.line_width)
-
-        # Vertical connections
-        ax.plot([x, x], [y + 0.3, y - 0.5],
-                color=props.line_color, linewidth=props.line_width)
-
-        if label:
-            ax.text(x + props.label_offset_x, y + props.label_offset_y, label,
-                   fontsize=9, ha='center', color=props.line_color)
+    def draw_wt(ax, x, y, label, fs):
+        ax.add_patch(Arc((x, y - 0.15), width=0.2, height=0.4,
+                         angle=0, theta1=90, theta2=360, color='red', linewidth=LW))
+        ax.plot([x, x + .1], [y - .15, y - .15], color='red', linewidth=LW)
+        ax.text(x - .15, y, label, fontsize=fs, ha='right', va='center')
 
     @staticmethod
-    def draw_reactor(ax, x: float, y: float, label: str = "", props: ComponentProperties = None):
-        """Draw Reactor (multiple arc segments)"""
-        if props is None:
-            props = ComponentLibrary.REACTOR
+    def draw_cvt(ax, x, y, label, fs):
+        """Capacitive voltage transformer (proven multi-stage symbol)."""
+        y = y - .2
+        ax.plot([x, x + .15], [y - .6, y - .6], color='red', linewidth=LW)
+        ax.plot([x + .15, x + .15], [y - .45, y - .75], color='red', linewidth=LW)
+        ax.plot([x + .2, x + .2], [y - .45, y - .75], color='red', linewidth=LW)
+        ax.plot([x + .2, x + .55], [y - .6, y - .6], color='red', linewidth=LW)
+        ax.plot([x + .55, x + .55], [y - .45, y - .75], color='red', linewidth=LW)
+        ax.plot([x + .6, x + .6], [y - .45, y - .75], color='red', linewidth=LW)
+        ax.plot([x + .6, x + .7], [y - .6, y - .6], color='red', linewidth=LW)
+        ax.plot([x + .7, x + .7], [y - .45, y - .75], color='green', linewidth=LW)
+        ax.plot([x + .75, x + .75], [y - .5, y - .7], color='green', linewidth=LW)
+        ax.plot([x + .8, x + .8], [y - .55, y - .65], color='green', linewidth=LW)
+        ax.plot([x + .375, x + .375], [y - .6, y - 1.4], color='red', linewidth=LW)
+        ax.plot([x + .375, x + .45], [y - 1.4, y - 1.4], color='red', linewidth=LW)
+        ax.add_patch(Arc((x + .45, y - 1.4 - 0.1125), width=0.1, height=0.2,
+                         angle=0, theta1=270, theta2=90, color='red', linewidth=LW))
+        ax.add_patch(Arc((x + .45, y - 1.4 + 0.1125), width=0.1, height=0.2,
+                         angle=0, theta1=270, theta2=90, color='red', linewidth=LW))
+        ax.plot([x + .575, x + .575], [y - 1, y - 1.7], color='red', linewidth=LW)
+        ax.plot([x + .55, x + .55], [y - 1, y - 1.7], color='red', linewidth=LW)
+        spacing = 0.25
+        for cy in (y - 1.1 - spacing / 4, y - 1.025 + spacing / 4,
+                   y - 1.6 + spacing / 4, y - 1.8 + spacing / 4):
+            ax.add_patch(Arc((x + .675, cy), width=0.1, height=0.2,
+                             angle=0, theta1=80, theta2=280, color='red', linewidth=LW))
+        ax.text(x + .4, y - .35, label, fontsize=fs, ha='center')
 
-        # Four arc segments
-        for i in range(4):
-            arc = Arc((x - 0.025, y - (i * 0.25)), width=0.2, height=0.4,
-                     angle=0, theta1=60, theta2=300,
-                     color=props.line_color, linewidth=props.line_width)
-            ax.add_patch(arc)
-
-        # Vertical connections
-        ax.plot([x, x], [y + 0.3, y - 1.3],
-                color=props.line_color, linewidth=props.line_width)
-
-        if label:
-            ax.text(x + props.label_offset_x, y + props.label_offset_y, label,
-                   fontsize=9, ha='center', color=props.line_color)
+    # ---------------- LIGHTNING ARRESTER ----------------
+    @staticmethod
+    def draw_la(ax, x, y, label, fs):
+        y = y - .2
+        ax.plot([x - .9, x], [y, y], color='red', linewidth=LW)
+        ax.plot([x - .9, x - .9], [y + .2, y - .2], color='green', linewidth=LW)
+        ax.plot([x - .95, x - .95], [y + .15, y - .15], color='green', linewidth=LW)
+        ax.plot([x - 1, x - 1], [y + .1, y - .1], color='green', linewidth=LW)
+        ax.text(x - .5, y - .45, label, fontsize=fs, ha='center')
 
     @staticmethod
-    def draw_la(ax, x: float, y: float, label: str = "", props: ComponentProperties = None):
-        """Draw Lightning Arrester (line with parallel earth)"""
-        if props is None:
-            props = ComponentLibrary.LA
+    def la_comp(ax, x, y):
+        """Arrester body: arrow inside a box."""
+        ax.add_patch(Polygon([[x + 0.1, y + 0.1], [x - 0.1, y], [x + 0.1, y - 0.1]],
+                             closed=True, fill=True, color='red', linewidth=LW))
+        ax.add_patch(Rectangle((x - 0.2, y - 0.2), 0.4, 0.4, fill=False,
+                               edgecolor='red', linewidth=LW))
 
-        # Horizontal line connection
-        ax.plot([x - 0.9, x], [y, y],
-                color=props.line_color, linewidth=props.line_width)
-
-        # Earth parallel lines (green)
-        ax.plot([x - 0.9, x - 0.9], [y + 0.2, y - 0.2],
-                color='green', linewidth=props.line_width)
-        ax.plot([x - 0.95, x - 0.95], [y + 0.15, y - 0.15],
-                color='green', linewidth=props.line_width)
-        ax.plot([x - 1.0, x - 1.0], [y + 0.1, y - 0.1],
-                color='green', linewidth=props.line_width)
-
-        if label:
-            ax.text(x - 0.5, y - 0.5, label,
-                   fontsize=9, ha='center', color=props.line_color)
+    # ---------------- POWER EQUIPMENT ----------------
+    @staticmethod
+    def draw_ict(ax, x, y, label, fs):
+        """Interconnecting / power transformer (two interlaced windings)."""
+        ax.add_patch(Arc((x, y - 0.15), width=0.3, height=0.6,
+                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+        ax.add_patch(Arc((x - .15, y - 0.15), width=0.2, height=0.4,
+                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+        ax.add_patch(Arc((x, y - .255 - 0.15), width=0.4, height=1.2,
+                         angle=0, theta1=270, theta2=90, color='red', linewidth=LW))
+        ax.text(x - .3, y - .7, label, fontsize=fs, ha='center')
 
     @staticmethod
-    def draw_earth_symbol(ax, x: float, y: float, label: str = "", props: ComponentProperties = None):
-        """Draw earth/grounding symbol (three horizontal lines)"""
-        if props is None:
-            props = ComponentLibrary.EARTH_SYMBOL
+    def draw_reacter(ax, x, y, label, fs):
+        ax.add_patch(Arc((x - .025, y - .05), width=0.2, height=0.4,
+                         angle=0, theta1=80, theta2=300, color='red', linewidth=LW))
+        ax.add_patch(Arc((x - .025, y - .3), width=0.2, height=0.4,
+                         angle=0, theta1=60, theta2=300, color='red', linewidth=LW))
+        ax.add_patch(Arc((x - .025, y - .55), width=0.2, height=0.4,
+                         angle=0, theta1=60, theta2=300, color='red', linewidth=LW))
+        ax.add_patch(Arc((x - .025, y - .8), width=0.2, height=0.4,
+                         angle=0, theta1=60, theta2=280, color='red', linewidth=LW))
+        ax.text(x - .45, y - .8, label, fontsize=fs, ha='center')
 
-        # Three decreasing length horizontal lines
-        ax.plot([x - 0.125, x + 0.125], [y + 0.1, y + 0.1],
-                color='green', linewidth=props.line_width)
-        ax.plot([x - 0.1, x + 0.1], [y, y],
-                color='green', linewidth=props.line_width)
-        ax.plot([x - 0.075, x + 0.075], [y - 0.1, y - 0.1],
-                color='green', linewidth=props.line_width)
-
-        # Vertical connection
-        ax.plot([x, x], [y + 0.2, y + 0.1],
-                color='green', linewidth=props.line_width)
+    # ---------------- TERMINATIONS ----------------
+    @staticmethod
+    def draw_symbol(ax, x, y, label, fs):
+        """Down arrow — outgoing feeder."""
+        ax.add_patch(Polygon([[x, y - 0.1], [x + 0.1, y + 0.1], [x - 0.1, y + 0.1]],
+                             closed=True, fill=False, edgecolor='red', linewidth=LW))
 
     @staticmethod
-    def draw_power_transformer(ax, x: float, y: float, label: str = "",
-                              hv_label: str = "HV", lv_label: str = "LV",
-                              props: ComponentProperties = None):
-        """Draw Power Transformer (primary & secondary windings)"""
-        if props is None:
-            props = ComponentLibrary.POWER_TRANSFORMER
+    def draw_symbol_upp(ax, x, y, label, fs):
+        """Up arrow — incoming feeder."""
+        ax.add_patch(Polygon([[x, y + 0.1], [x + 0.1, y - 0.1], [x - 0.1, y - 0.1]],
+                             closed=True, fill=False, edgecolor='red', linewidth=LW))
 
-        # Primary winding (HV, red)
-        arc1_hv = Arc((x - 0.2, y + 0.3), width=0.2, height=0.4,
-                      angle=0, theta1=0, theta2=360,
-                      color=props.line_color, linewidth=props.line_width)
-        ax.add_patch(arc1_hv)
+    @staticmethod
+    def draw_earth_symbol(ax, x, y, label, fs):
+        ax.plot([x - .125, x + .125], [y + .1, y + .1], color='green', linewidth=LW)
+        ax.plot([x - .1, x + .1], [y, y], color='green', linewidth=LW)
+        ax.plot([x - .075, x + .075], [y - .1, y - .1], color='green', linewidth=LW)
+        ax.plot([x - .05, x + .05], [y - .2, y - .2], color='green', linewidth=LW)
+        ax.plot([x - .025, x + .025], [y - .3, y - .3], color='green', linewidth=LW)
 
-        # Secondary winding (LV, blue)
-        arc1_lv = Arc((x + 0.2, y + 0.3), width=0.2, height=0.4,
-                      angle=0, theta1=0, theta2=360,
-                      color='blue', linewidth=props.line_width)
-        ax.add_patch(arc1_lv)
-
-        # Tertiary winding (if needed, green)
-        arc1_tert = Arc((x, y - 0.3), width=0.2, height=0.4,
-                       angle=0, theta1=0, theta2=360,
-                       color='green', linewidth=props.line_width)
-        ax.add_patch(arc1_tert)
-
-        # Connections
-        ax.plot([x - 0.2, x - 0.2], [y + 0.7, y + 1.0],
-                color=props.line_color, linewidth=props.line_width)
-        ax.plot([x + 0.2, x + 0.2], [y + 0.7, y - 1.0],
-                color='blue', linewidth=props.line_width)
-        ax.plot([x, x], [y - 0.7, y - 1.0],
-                color='green', linewidth=props.line_width)
-
-        if label:
-            ax.text(x - 0.5, y - 0.8, label, fontsize=9, ha='center')
-        if hv_label:
-            ax.text(x - 0.2, y + 1.2, hv_label, fontsize=8, ha='center', color=props.line_color)
-        if lv_label:
-            ax.text(x + 0.2, y - 1.2, lv_label, fontsize=8, ha='center', color='blue')
-
-
-# ============================================================================
-# COMPONENT REGISTRY (for easy access by name)
-# ============================================================================
-
-COMPONENT_REGISTRY = {
-    'isolator': ComponentLibrary.ISOLATOR,
-    'breaker': ComponentLibrary.BREAKER,
-    'breaker_coupler': ComponentLibrary.BREAKER_COUPLER,
-    'ct': ComponentLibrary.CT,
-    'wt': ComponentLibrary.WT,
-    'cvt': ComponentLibrary.CVT,
-    'la': ComponentLibrary.LA,
-    'reactor': ComponentLibrary.REACTOR,
-    'power_transformer': ComponentLibrary.POWER_TRANSFORMER,
-    'earth_switch': ComponentLibrary.EARTH_SWITCH,
-    'earth_symbol': ComponentLibrary.EARTH_SYMBOL,
-}
-
-
-DRAWER_REGISTRY = {
-    'isolator': ComponentDrawer.draw_isolator,
-    'breaker': ComponentDrawer.draw_breaker,
-    'breaker_coupler': ComponentDrawer.draw_breaker_coupler,
-    'ct': ComponentDrawer.draw_ct,
-    'wt': ComponentDrawer.draw_wt,
-    'reactor': ComponentDrawer.draw_reactor,
-    'la': ComponentDrawer.draw_la,
-    'earth_symbol': ComponentDrawer.draw_earth_symbol,
-    'power_transformer': ComponentDrawer.draw_power_transformer,
-}
+    @staticmethod
+    def draw_name(ax, x, y, label, fs):
+        ax.text(x, y + .5, label, fontsize=fs + 2, ha='center')
 
 
 if __name__ == "__main__":
-    print("Component Library Loaded")
-    print(f"Available components: {list(COMPONENT_REGISTRY.keys())}")
+    print("Component library v2 loaded:")
+    for c in COMPONENT_CATALOG:
+        print(f"  {c.symbol_type:16s} {c.name} ({c.description})")
