@@ -480,7 +480,7 @@ class SLDRenderer:
             D.draw_bus_vt(ax, xb, yb - 1.6, f"{tag} VT", fs)
             self.components_count += 3
 
-        one(self.x_start - 0.5, self.bus1_y, "B1")
+        one(self.bus_left + 1.0, self.bus1_y, "B1")
         if self.is_double:
             one(x_end - 0.7, self.bus2_y, "B2")
 
@@ -505,10 +505,14 @@ class SLDRenderer:
                   and p.configuration == 'double_bus_sectionalizer'
                   and n_bays > 1)
 
-        # Labels STACKED in the clear zone above bus-1 (no VT/riser overlap)
-        def label(txt, y_above):
-            yy = (self.bus1_y + 0.85) if y_above else (self.bus1_y + 0.35)
-            ax.text(bl, yy, txt, fontsize=fs + 2, color='black',
+        # Single combined rating label (both buses identical) top-left
+        ax.text(bl, self.bus1_y + 0.6, f"Bus Rating: {rating}",
+                fontsize=fs + 2, color='black', fontweight='bold',
+                ha='left', va='center')
+
+        def bus_id(txt, y_above):
+            yy = (self.bus1_y + 0.28) if y_above else (self.bus2_y - 0.32)
+            ax.text(bl, yy, txt, fontsize=fs + 1, color='black',
                     fontweight='bold', ha='left', va='center')
 
         def split_bus(yb, s_label):
@@ -527,28 +531,28 @@ class SLDRenderer:
         if is_sec:
             sec2 = int(getattr(p, 'sectionalizer_count', 2)) >= 2
             xm1 = split_bus(self.bus1_y, "89S-1")
-            label(f"BUS-1A  {rating}", True)
-            ax.text(xm1 + 0.6, self.bus1_y + 0.35, "BUS-1B",
-                    fontsize=fs + 2, color='black', fontweight='bold',
+            bus_id("BUS-1A", True)
+            ax.text(xm1 + 0.6, self.bus1_y + 0.28, "BUS-1B",
+                    fontsize=fs + 1, color='black', fontweight='bold',
                     ha='left', va='center')
             if sec2:
                 xm2 = split_bus(self.bus2_y, "89S-2")
-                label(f"BUS-2A  {rating}", False)
-                ax.text(xm2 + 0.6, self.bus2_y - 0.55, "BUS-2B",
-                        fontsize=fs + 2, color='black', fontweight='bold',
+                bus_id("BUS-2A", False)
+                ax.text(xm2 + 0.6, self.bus2_y - 0.32, "BUS-2B",
+                        fontsize=fs + 1, color='black', fontweight='bold',
                         ha='left', va='center')
             else:
                 ax.plot([bl, x_end], [self.bus2_y, self.bus2_y],
                         color='black', linewidth=BUS_LW)
-                label(f"BUS-2  {rating}", False)
+                bus_id("BUS-2", False)
         else:
             ax.plot([bl, x_end], [self.bus1_y, self.bus1_y],
                     color='black', linewidth=BUS_LW)
-            label(f"BUS-1  {rating}", True)
+            bus_id("BUS-1", True)
             if self.is_double:
                 ax.plot([bl, x_end], [self.bus2_y, self.bus2_y],
                         color='black', linewidth=BUS_LW)
-                label(f"BUS-2  {rating}", False)
+                bus_id("BUS-2", False)
         return x_end
 
     # ------------------------------------------------------------------
@@ -593,31 +597,33 @@ class SLDRenderer:
                                       angle=90, theta1=80, theta2=280,
                                       color='black', linewidth=LWm))
         elif key == 'cvt':
-            # horizontal: two capacitor plates then winding coil
-            ln(cx - 0.8, cy, cx - 0.45, cy)
-            ln(cx - 0.45, cy + 0.28, cx - 0.45, cy - 0.28)
-            ln(cx - 0.33, cy + 0.28, cx - 0.33, cy - 0.28)
-            ln(cx - 0.33, cy, cx - 0.05, cy)
-            ln(cx - 0.05, cy + 0.28, cx - 0.05, cy - 0.28)
-            ln(cx + 0.07, cy + 0.28, cx + 0.07, cy - 0.28)
-            ln(cx + 0.07, cy, cx + 0.3, cy)
-            for k in range(3):
-                pg.add_patch(mpatches.Arc((cx + 0.3 + k * 0.16, cy),
-                                          0.22, 0.16, angle=90,
+            # CVT = capacitor divider (stacked plate pairs) + winding coil
+            ln(cx - 0.8, cy, cx - 0.55, cy)
+            for j in range(3):  # three capacitor plate pairs
+                xp = cx - 0.55 + j * 0.22
+                ln(xp, cy + 0.26, xp, cy - 0.26)
+                ln(xp + 0.08, cy + 0.26, xp + 0.08, cy - 0.26)
+                if j < 2:
+                    ln(xp + 0.08, cy, xp + 0.22, cy)
+            ln(cx + 0.19, cy, cx + 0.34, cy)
+            for k in range(3):   # winding coil
+                pg.add_patch(mpatches.Arc((cx + 0.34 + k * 0.15, cy),
+                                          0.2, 0.15, angle=90,
                                           theta1=80, theta2=280,
                                           color='black', linewidth=LWm))
         elif key == 'vt':
-            # match bus-VT: bushing arcs + winding coil, horizontal
-            ln(cx - 0.8, cy, cx - 0.45, cy)
-            pg.add_patch(mpatches.Arc((cx - 0.33, cy), 0.22, 0.16,
-                                      angle=0, theta1=180, theta2=360,
+            # VT = CVT without capacitance → winding coil only (matches
+            # the bus-VT drawing: bushing arc pair + coil, NO cap plates)
+            ln(cx - 0.8, cy, cx - 0.5, cy)
+            pg.add_patch(mpatches.Arc((cx - 0.38, cy), 0.24, 0.34,
+                                      angle=0, theta1=270, theta2=90,
                                       color='black', linewidth=LWm))
-            pg.add_patch(mpatches.Arc((cx - 0.09, cy), 0.22, 0.16,
-                                      angle=0, theta1=180, theta2=360,
+            pg.add_patch(mpatches.Arc((cx - 0.14, cy), 0.24, 0.34,
+                                      angle=0, theta1=270, theta2=90,
                                       color='black', linewidth=LWm))
-            ln(cx + 0.05, cy + 0.28, cx + 0.05, cy - 0.28)
+            ln(cx, cy, cx + 0.12, cy)
             for k in range(4):
-                pg.add_patch(mpatches.Arc((cx + 0.2 + k * 0.16, cy),
+                pg.add_patch(mpatches.Arc((cx + 0.12 + k * 0.16, cy),
                                           0.22, 0.16, angle=90,
                                           theta1=80, theta2=280,
                                           color='black', linewidth=LWm))
@@ -645,10 +651,11 @@ class SLDRenderer:
                                       color='black', linewidth=LWm))
             ln(cx + 0.38, cy, cx + 0.8, cy)
         elif key == 'reactor':
+            # mirrored coil (bumps face opposite the CT/VT windings)
             ln(cx - 0.8, cy, cx - 0.5, cy)
             for k in range(3):
                 pg.add_patch(mpatches.Arc((cx - 0.3 + k * 0.25, cy),
-                                          0.5, 0.35, angle=90,
+                                          0.5, 0.35, angle=270,
                                           theta1=60, theta2=300,
                                           color='black', linewidth=LWm))
             ln(cx + 0.45, cy, cx + 0.8, cy)
