@@ -577,11 +577,19 @@ class SLDRenderer:
             ln(cx - 0.18, cy - 0.16, cx + 0.2, cy + 0.16)  # open blade
             ln(cx + 0.28, cy, cx + 0.8, cy)
         elif key == 'earth':
-            ln(cx - 0.8, cy, cx - 0.05, cy)
-            ln(cx - 0.2, cy + 0.16, cx + 0.15, cy - 0.16)  # blade
-            ln(cx + 0.25, cy + 0.28, cx + 0.25, cy - 0.28)
-            ln(cx + 0.4, cy + 0.18, cx + 0.4, cy - 0.18)
-            ln(cx + 0.55, cy + 0.09, cx + 0.55, cy - 0.09)
+            # isolation gap (two contacts + open blade) BOTH sides, then earth
+            ln(cx - 0.8, cy, cx - 0.42, cy)          # lead in
+            pg.add_patch(mpatches.Arc((cx - 0.36, cy), 0.1, 0.1,
+                                      angle=0, theta1=0, theta2=360,
+                                      color='black', linewidth=LWm))
+            ln(cx - 0.32, cy - 0.15, cx - 0.02, cy + 0.15)   # open blade
+            pg.add_patch(mpatches.Arc((cx + 0.04, cy), 0.1, 0.1,
+                                      angle=0, theta1=0, theta2=360,
+                                      color='black', linewidth=LWm))
+            ln(cx + 0.1, cy, cx + 0.32, cy)          # lead to ground
+            ln(cx + 0.32, cy + 0.26, cx + 0.32, cy - 0.26)   # ground bars
+            ln(cx + 0.44, cy + 0.17, cx + 0.44, cy - 0.17)
+            ln(cx + 0.56, cy + 0.08, cx + 0.56, cy - 0.08)
         elif key == 'breaker':
             pg.add_patch(mpatches.Rectangle((cx - 0.3, cy - 0.2), 0.6, 0.4,
                                             fill=False, edgecolor='black',
@@ -589,42 +597,41 @@ class SLDRenderer:
             ln(cx - 0.8, cy, cx - 0.3, cy)
             ln(cx + 0.3, cy, cx + 0.8, cy)
         elif key == 'ct':
+            # mirrored winding (arcs open upward, opposite the reactor)
             ln(cx - 0.8, cy, cx + 0.8, cy)
-            pg.add_patch(mpatches.Arc((cx - 0.16, cy + 0.02), 0.5, 0.32,
-                                      angle=90, theta1=80, theta2=280,
+            pg.add_patch(mpatches.Arc((cx - 0.16, cy), 0.5, 0.32,
+                                      angle=270, theta1=80, theta2=280,
                                       color='black', linewidth=LWm))
-            pg.add_patch(mpatches.Arc((cx + 0.16, cy + 0.02), 0.5, 0.32,
-                                      angle=90, theta1=80, theta2=280,
+            pg.add_patch(mpatches.Arc((cx + 0.16, cy), 0.5, 0.32,
+                                      angle=270, theta1=80, theta2=280,
                                       color='black', linewidth=LWm))
         elif key == 'cvt':
-            # CVT = capacitor divider (stacked plate pairs) + winding coil
-            ln(cx - 0.8, cy, cx - 0.55, cy)
-            for j in range(3):  # three capacitor plate pairs
-                xp = cx - 0.55 + j * 0.22
+            # CVT = capacitor divider (‖ ‖ plate pairs) + VT winding coil
+            ln(cx - 0.8, cy, cx - 0.6, cy)
+            for j in range(3):  # three series capacitor units
+                xp = cx - 0.58 + j * 0.2
                 ln(xp, cy + 0.26, xp, cy - 0.26)
-                ln(xp + 0.08, cy + 0.26, xp + 0.08, cy - 0.26)
-                if j < 2:
-                    ln(xp + 0.08, cy, xp + 0.22, cy)
-            ln(cx + 0.19, cy, cx + 0.34, cy)
-            for k in range(3):   # winding coil
-                pg.add_patch(mpatches.Arc((cx + 0.34 + k * 0.15, cy),
-                                          0.2, 0.15, angle=90,
+                ln(xp + 0.09, cy + 0.26, xp + 0.09, cy - 0.26)
+                ln(xp + 0.09, cy, xp + 0.11, cy)
+            ln(cx + 0.04, cy, cx + 0.2, cy)
+            for k in range(3):   # winding coil (mirrored, like CT)
+                pg.add_patch(mpatches.Arc((cx + 0.2 + k * 0.16, cy),
+                                          0.22, 0.16, angle=270,
                                           theta1=80, theta2=280,
                                           color='black', linewidth=LWm))
         elif key == 'vt':
-            # VT = CVT without capacitance → winding coil only (matches
-            # the bus-VT drawing: bushing arc pair + coil, NO cap plates)
+            # PT / Bus VT = bushing pair + winding coil (CVT w/o capacitors)
             ln(cx - 0.8, cy, cx - 0.5, cy)
-            pg.add_patch(mpatches.Arc((cx - 0.38, cy), 0.24, 0.34,
+            pg.add_patch(mpatches.Arc((cx - 0.4, cy), 0.22, 0.4,
                                       angle=0, theta1=270, theta2=90,
                                       color='black', linewidth=LWm))
-            pg.add_patch(mpatches.Arc((cx - 0.14, cy), 0.24, 0.34,
+            pg.add_patch(mpatches.Arc((cx - 0.18, cy), 0.22, 0.4,
                                       angle=0, theta1=270, theta2=90,
                                       color='black', linewidth=LWm))
-            ln(cx, cy, cx + 0.12, cy)
-            for k in range(4):
-                pg.add_patch(mpatches.Arc((cx + 0.12 + k * 0.16, cy),
-                                          0.22, 0.16, angle=90,
+            ln(cx - 0.06, cy, cx + 0.1, cy)
+            for k in range(4):   # winding coil (mirrored, like CT)
+                pg.add_patch(mpatches.Arc((cx + 0.1 + k * 0.16, cy),
+                                          0.22, 0.16, angle=270,
                                           theta1=80, theta2=280,
                                           color='black', linewidth=LWm))
         elif key == 'la':
@@ -651,14 +658,14 @@ class SLDRenderer:
                                       color='black', linewidth=LWm))
             ln(cx + 0.38, cy, cx + 0.8, cy)
         elif key == 'reactor':
-            # mirrored coil (bumps face opposite the CT/VT windings)
-            ln(cx - 0.8, cy, cx - 0.5, cy)
-            for k in range(3):
-                pg.add_patch(mpatches.Arc((cx - 0.3 + k * 0.25, cy),
-                                          0.5, 0.35, angle=270,
-                                          theta1=60, theta2=300,
+            # coil of full loops (as per SLD reactor winding)
+            ln(cx - 0.8, cy, cx - 0.44, cy)
+            for k in range(4):
+                pg.add_patch(mpatches.Arc((cx - 0.3 + k * 0.2, cy),
+                                          0.28, 0.36, angle=0,
+                                          theta1=0, theta2=360,
                                           color='black', linewidth=LWm))
-            ln(cx + 0.45, cy, cx + 0.8, cy)
+            ln(cx + 0.44, cy, cx + 0.8, cy)
 
     def _draw_legend(self, pg):
         """Legend as bordered tables, bottom-left (SYMBOL | DESCRIPTION)."""
