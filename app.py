@@ -195,6 +195,43 @@ with st.sidebar:
 
     st.divider()
 
+    # Ratings
+    st.markdown("**Ratings**")
+
+    rcol1, rcol2 = st.columns(2)
+    with rcol1:
+        bus_fault_ka = st.number_input(
+            "Bus S/C Rating (kA)", min_value=10, max_value=100, value=63,
+            help="Busbar short-circuit withstand rating")
+    with rcol2:
+        bus_fault_sec = st.number_input(
+            "S/C Duration (Sec)", min_value=1, max_value=5, value=1)
+
+    tx_mva, tx_z, tx_vg = [], [], []
+    if transformer_bay_count > 0:
+        with st.expander("Transformer ratings (per ICT)"):
+            for i in range(transformer_bay_count):
+                st.markdown(f"*Tr.{i + 1}*")
+                tc1, tc2, tc3 = st.columns(3)
+                with tc1:
+                    tx_mva.append(st.text_input(
+                        "MVA", "500", key=f"tx_mva_{i}"))
+                with tc2:
+                    tx_z.append(st.text_input(
+                        "%Z", "12.5", key=f"tx_z_{i}"))
+                with tc3:
+                    tx_vg.append(st.text_input(
+                        "Vector Grp", "YNa0d11", key=f"tx_vg_{i}"))
+
+    reactor_mvar = []
+    if reactor_bay_count > 0:
+        with st.expander("Reactor ratings (per reactor)"):
+            for i in range(reactor_bay_count):
+                reactor_mvar.append(st.text_input(
+                    f"Reactor-{i + 1} MVAr", "80", key=f"re_mvar_{i}"))
+
+    st.divider()
+
     # Custom Names (Optional)
     st.markdown("**Custom Bay Names (Optional)**")
 
@@ -274,7 +311,13 @@ with tab1:
                     line_names=line_names if 'line_names' in locals() else [],
                     transformer_names=transformer_names if 'transformer_names' in locals() else [],
                     reactor_names=reactor_names if 'reactor_names' in locals() else [],
-                    title_text=title_text
+                    title_text=title_text,
+                    bus_fault_ka=float(bus_fault_ka),
+                    bus_fault_sec=float(bus_fault_sec),
+                    tx_mva=tx_mva,
+                    tx_z=tx_z,
+                    tx_vg=tx_vg,
+                    reactor_mvar=reactor_mvar
                 )
 
                 # Generate SLD

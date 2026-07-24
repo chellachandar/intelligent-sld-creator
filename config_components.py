@@ -156,7 +156,7 @@ class ComponentDrawer:
         ax.plot([x - .9, x - .9], [y + .2, y - .2], color='green', linewidth=LW)
         ax.plot([x - .95, x - .95], [y + .15, y - .15], color='green', linewidth=LW)
         ax.plot([x - 1, x - 1], [y + .1, y - .1], color='green', linewidth=LW)
-        ax.text(x - .5, y - .45, label, fontsize=fs, ha='center')
+        ax.text(x - .5, y - .62, label, fontsize=fs, ha='center')
 
     @staticmethod
     def la_comp(ax, x, y):
@@ -192,19 +192,29 @@ class ComponentDrawer:
 
     @staticmethod
     def draw_ict3(ax, x, y, label, fs):
-        """3-winding autotransformer (HV+LV overlapping, tertiary, earthed
-        neutral) — matches reference ICT symbol."""
-        ax.add_patch(Arc((x, y), width=0.5, height=0.5,
+        """ICT/power transformer: two overlapping winding circles
+        (approved representation)."""
+        ax.add_patch(Arc((x, y), width=0.6, height=0.6,
                          angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
-        ax.add_patch(Arc((x, y - 0.3), width=0.5, height=0.5,
+        ax.add_patch(Arc((x, y - 0.4), width=0.6, height=0.6,
                          angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
-        ax.add_patch(Arc((x + 0.4, y - 0.15), width=0.26, height=0.26,
-                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
-        # earthed neutral (left)
-        ax.plot([x - 0.25, x - 0.55], [y - 0.15, y - 0.15], color='green', linewidth=LW)
-        ax.plot([x - 0.55, x - 0.55], [y - 0.15, y - 0.3], color='green', linewidth=LW)
-        ComponentDrawer.draw_earth_symbol(ax, x - 0.55, y - 0.42, "", fs)
-        ax.text(x - 0.35, y + 0.32, label, fontsize=fs, ha='right')
+        ax.text(x - 0.4, y - 0.2, label, fontsize=fs, ha='right', va='center')
+
+    @staticmethod
+    def draw_bus_vt(ax, x, y, label, fs):
+        """Bus VT — CVT winding assembly WITHOUT the capacitor divider."""
+        ax.plot([x, x], [y, y - 0.45], color='red', linewidth=LW)
+        ax.plot([x, x + .075], [y - .45, y - .45], color='red', linewidth=LW)
+        ax.add_patch(Arc((x + .075, y - .45 - 0.1125), width=0.1, height=0.2,
+                         angle=0, theta1=270, theta2=90, color='red', linewidth=LW))
+        ax.add_patch(Arc((x + .075, y - .45 + 0.1125), width=0.1, height=0.2,
+                         angle=0, theta1=270, theta2=90, color='red', linewidth=LW))
+        ax.plot([x + .2, x + .2], [y - .05, y - .75], color='red', linewidth=LW)
+        ax.plot([x + .175, x + .175], [y - .05, y - .75], color='red', linewidth=LW)
+        for cy in (y - .2125, y - .0125, y - .5875, y - .7875):
+            ax.add_patch(Arc((x + .3, cy), width=0.1, height=0.2,
+                             angle=0, theta1=80, theta2=280, color='red', linewidth=LW))
+        ax.text(x - .12, y - .45, label, fontsize=fs, ha='right', va='center')
 
     @staticmethod
     def draw_ngr(ax, x, y, fs):

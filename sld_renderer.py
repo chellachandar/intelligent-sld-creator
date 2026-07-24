@@ -186,12 +186,23 @@ class SLDGenerationParams:
     title_text: str = "POWERGRID CORPORATION OF INDIA LTD"
     show_legend: bool = True
     dpi: int = 300
+    # Ratings
+    bus_fault_ka: float = 63
+    bus_fault_sec: float = 1
+    tx_mva: List[str] = None       # per-ICT MVA
+    tx_z: List[str] = None         # per-ICT %Z
+    tx_vg: List[str] = None        # per-ICT vector group
+    reactor_mvar: List[str] = None  # per-reactor MVAr
 
     def __post_init__(self):
         self.line_names = self.line_names or []
         self.cable_names = self.cable_names or []
         self.transformer_names = self.transformer_names or []
         self.reactor_names = self.reactor_names or []
+        self.tx_mva = self.tx_mva or []
+        self.tx_z = self.tx_z or []
+        self.tx_vg = self.tx_vg or []
+        self.reactor_mvar = self.reactor_mvar or []
 
 
 # ============================================================================
@@ -306,12 +317,9 @@ class SLDRenderer:
         self._bay_top(ax, x, num)
         ax.plot([x + .25, x + .25], [y - 2.7, y - 4.5], color='red', linewidth=LW)
         D.draw_ct(ax, x + 0.25, y - 3.4, f"{num}CT", fs)
-        D.earth_sh(ax, x + 0.25, y - 3.7, f"{num}89BE", fs)
         D.draw_isolator(ax, x + 0.25, y - 4.7, f"{num}89L", fs)
         D.earth_sh(ax, x + 0.25, y - 4.85, f"{num}89LE", fs)
-        ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 6.55], color='red', linewidth=LW)
-        D.draw_wt(ax, x + 0.25, y - 6.6, f"{num}WT", fs)
-        ax.plot([x + 0.25, x + 0.25], [y - 6.75, y - 10.4], color='red', linewidth=LW)
+        ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 10.4], color='red', linewidth=LW)
         D.draw_cvt(ax, x + 0.25, y - 7, f"{num}CVT", fs)
         D.draw_la(ax, x + 0.25, y - 8.5, f"{num}LA", fs)
         D.la_comp(ax, x - 0.25, y - 8.7)
@@ -326,7 +334,6 @@ class SLDRenderer:
         self._bay_top(ax, x, num)
         ax.plot([x + .25, x + .25], [y - 2.7, y - 4.5], color='red', linewidth=LW)
         D.draw_ct(ax, x + 0.25, y - 3.4, f"{num}CT", fs)
-        D.earth_sh(ax, x + 0.25, y - 3.7, f"{num}89BE", fs)
         D.draw_isolator(ax, x + 0.25, y - 4.7, f"{num}89L", fs)
         D.earth_sh(ax, x + 0.25, y - 4.85, f"{num}89LE", fs)
         ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 10.3], color='red', linewidth=LW)
@@ -337,42 +344,60 @@ class SLDRenderer:
         self.components_count += 7
         self._bay_label(ax, x, num, name)
 
-    def _bay_ict(self, ax, x, num, name):
+    def _tx_rating(self, i):
+        p = self.params
+
+        def pick(lst, d):
+            return str(lst[i]) if i < len(lst) and str(lst[i]).strip() else d
+
+        return {'mva': pick(p.tx_mva, "500"), 'z': pick(p.tx_z, "12.5"),
+                'vg': pick(p.tx_vg, "YNa0d11")}
+
+    def _bay_ict(self, ax, x, num, name, idx=0):
         y, fs = self.bay_y, self.fs
         p = self.params
         self._bay_top(ax, x, num)
         ax.plot([x + .25, x + .25], [y - 2.7, y - 4.5], color='red', linewidth=LW)
         D.draw_ct(ax, x + 0.25, y - 3.4, f"{num}CT", fs)
-        D.earth_sh(ax, x + 0.25, y - 3.7, f"{num}89BE", fs)
         D.draw_isolator(ax, x + 0.25, y - 4.7, f"{num}89T", fs)
         D.earth_sh(ax, x + 0.25, y - 4.85, f"{num}89TE", fs)
         ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 7.8], color='red', linewidth=LW)
         D.draw_la(ax, x + 0.25, y - 6.6, f"{num}LA", fs)
         D.la_comp(ax, x - 0.25, y - 6.8)
-        ratio = ""
-        if self.is_dual_voltage:
-            ratio = f"\n{int(p.hv_voltage)}/{int(p.lv_voltage)}kV"
-        D.draw_ict3(ax, x + 0.25, y - 8.1, f"{num}ICT{ratio}", fs)
-        ax.plot([x + 0.25, x + 0.25], [y - 8.75, y - 10.1], color='red', linewidth=LW)
+        D.draw_ict3(ax, x + 0.25, y - 8.1, f"{num}ICT", fs)
+        # Rating block (per-transformer inputs), right of symbol
+        r = self._tx_rating(idx)
+        ratio = (f"{int(p.hv_voltage)}/{int(p.lv_voltage)}kV"
+                 if self.is_dual_voltage else f"{int(p.hv_voltage)}kV")
+        block = (f"Tr.{idx + 1}\n{r['mva']}MVA\n{ratio}\n"
+                 f"%Z={r['z']}\n{r['vg']}")
+        ax.text(x + 0.65, y - 7.75, block, fontsize=fs, ha='left', va='top')
+        ax.plot([x + 0.25, x + 0.25], [y - 8.8, y - 10.1], color='red', linewidth=LW)
         D.draw_symbol(ax, x + 0.25, y - 10.2, "", fs)
         if self.is_dual_voltage:
             ax.text(x + 0.25, y - 10.75, f"TO {int(p.lv_voltage)}kV",
                     fontsize=fs, ha='center')
-        self.components_count += 6
+        self.components_count += 5
         self._bay_label(ax, x, num, name)
 
-    def _bay_reactor(self, ax, x, num, name):
+    def _bay_reactor(self, ax, x, num, name, idx=0):
         y, fs = self.bay_y, self.fs
+        p = self.params
         self._bay_top(ax, x, num)
         ax.plot([x + .25, x + .25], [y - 2.7, y - 4.5], color='red', linewidth=LW)
         D.draw_ct(ax, x + 0.25, y - 3.4, f"{num}CT", fs)
-        D.earth_sh(ax, x + 0.25, y - 3.7, f"{num}89BE", fs)
         D.draw_isolator(ax, x + 0.25, y - 4.7, f"{num}89R", fs)
         D.earth_sh(ax, x + 0.25, y - 4.85, f"{num}89RE", fs)
         ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 7.85], color='red', linewidth=LW)
         D.draw_la(ax, x + 0.25, y - 6.6, f"{num}LA", fs)
         D.la_comp(ax, x - 0.25, y - 6.8)
         D.draw_reacter(ax, x + 0.25, y - 8, f"{num}R", fs)
+        # Rating block (per-reactor input), right of coil
+        mvar = (str(p.reactor_mvar[idx])
+                if idx < len(p.reactor_mvar) and str(p.reactor_mvar[idx]).strip()
+                else "80")
+        block = f"R-{idx + 1}\n{mvar}MVAr\n{int(p.hv_voltage)}kV"
+        ax.text(x + 0.55, y - 7.75, block, fontsize=fs, ha='left', va='top')
         ax.plot([x + 0.25, x + 0.25], [y - 9, y - 9.55], color='red', linewidth=LW)
         D.draw_ngr(ax, x + 0.25, y - 9.6, fs)
         ax.plot([x + 0.25, x + 0.25], [y - 9.95, y - 10.15], color='red', linewidth=LW)
@@ -407,12 +432,11 @@ class SLDRenderer:
         def one(xb, yb, tag):
             ax.plot([xb, xb], [yb, yb - 0.4], color='red', linewidth=LW)
             D.draw_isolator(ax, xb, yb - 0.4, f"{tag}-89V", fs)
-            D.earth_sh(ax, xb, yb - 0.6, f"{tag}-89E", fs)
-            ax.plot([xb, xb], [yb - 1.6, yb - 1.8], color='red', linewidth=LW)
-            D.draw_wt(ax, xb, yb - 2.0, f"{tag} VT", fs)
+            D.earth_sh(ax, xb, yb - 0.7, f"{tag}-89E", fs)
+            D.draw_bus_vt(ax, xb, yb - 1.6, f"{tag} VT", fs)
             self.components_count += 3
 
-        one(2.4, self.bus1_y, "B1")
+        one(2.3, self.bus1_y, "B1")
         if self.is_double:
             one(3.7, self.bus2_y, "B2")
 
@@ -441,10 +465,15 @@ class SLDRenderer:
                 ax.plot([1, x_end], [self.bus2_y, self.bus2_y],
                         color='green', linewidth=BUS_LW)
 
-        ax.text(1.1, self.bus1_y + 0.3, f"{hv} kV BUS-1",
+        ka = self.params.bus_fault_ka
+        sec = self.params.bus_fault_sec
+        ka_s = f"{int(ka)}" if float(ka).is_integer() else f"{ka}"
+        sec_s = f"{int(sec)}" if float(sec).is_integer() else f"{sec}"
+        rating = f"{hv}kV, {ka_s}kA, {sec_s}Sec"
+        ax.text(1.1, self.bus1_y + 0.3, f"BUS-1  {rating}",
                 fontsize=fs + 3, color='blue', fontweight='bold')
         if self.is_double:
-            ax.text(1.1, self.bus2_y - 0.55, f"{hv} kV BUS-2",
+            ax.text(1.1, self.bus2_y - 0.55, f"BUS-2  {rating}",
                     fontsize=fs + 3, color='green', fontweight='bold')
         return x_end
 
@@ -461,6 +490,8 @@ class SLDRenderer:
         x_end = self._draw_buses(ax, n)
         self._draw_bus_aux(ax)
 
+        ict_i = 0
+        re_i = 0
         for idx, (btype, num, name) in enumerate(bays):
             x = self.x_start + idx * self.gap
             if btype == 'line':
@@ -468,9 +499,11 @@ class SLDRenderer:
             elif btype == 'cable':
                 self._bay_cable(ax, x, num, name)
             elif btype == 'ict':
-                self._bay_ict(ax, x, num, name)
+                self._bay_ict(ax, x, num, name, ict_i)
+                ict_i += 1
             elif btype == 'reactor':
-                self._bay_reactor(ax, x, num, name)
+                self._bay_reactor(ax, x, num, name, re_i)
+                re_i += 1
             elif btype == 'coupler':
                 self._bay_coupler(ax, x, name)
             self.bays_drawn.append((btype, num, name))
