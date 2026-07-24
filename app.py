@@ -143,6 +143,17 @@ with st.sidebar:
         help="Bus architecture type"
     )
 
+    sectionalizer_count = 2
+    if configuration == "double_bus_sectionalizer":
+        sectionalizer_count = st.radio(
+            "Bus Sectionalizers",
+            options=[1, 2],
+            index=1,
+            horizontal=True,
+            help="1 = BUS-1 split into 1A/1B, BUS-2 continuous. "
+                 "2 = both buses split (1A/1B and 2A/2B)."
+        )
+
     st.divider()
 
     # Bay Configuration
@@ -190,8 +201,16 @@ with st.sidebar:
         min_value=0,
         max_value=5,
         value=1 if configuration != "single_bus" else 0,
-        help="Number of bus coupler bays"
+        help="Coupler scheme: exactly 1. Sectionalizer scheme: 0-2 "
+             "(C1 ties left sections, C2 ties right sections)."
     )
+
+    if configuration == "double_bus_coupler" and bus_coupler_count != 1:
+        st.error("❌ No such configuration: 'Double Bus Bar with Coupler' "
+                 "has exactly ONE bus coupler.")
+    if configuration == "double_bus_sectionalizer" and bus_coupler_count > 2:
+        st.error("❌ No such configuration: max TWO bus couplers in "
+                 "sectionalizer scheme.")
 
     st.divider()
 
@@ -229,6 +248,17 @@ with st.sidebar:
             for i in range(reactor_bay_count):
                 reactor_mvar.append(st.text_input(
                     f"Reactor-{i + 1} MVAr", "80", key=f"re_mvar_{i}"))
+
+    st.divider()
+
+    # Drawing details (title block)
+    st.markdown("**Drawing Details (Title Block)**")
+    with st.expander("Client / Project / Drg.No"):
+        tb_client = st.text_input("Client", "", key="tb_client")
+        tb_project = st.text_input("Project", "", key="tb_project")
+        tb_drawn = st.text_input("Drawn By", "", key="tb_drawn")
+        tb_drgno = st.text_input("Drawing No.", "", key="tb_drgno")
+        tb_rev = st.text_input("Rev", "1", key="tb_rev")
 
     st.divider()
 
@@ -319,6 +349,12 @@ with tab1:
                     title_text=title_text,
                     bus_fault_ka=float(bus_fault_ka),
                     bus_fault_sec=float(bus_fault_sec),
+                    sectionalizer_count=int(sectionalizer_count),
+                    client=tb_client,
+                    project=tb_project,
+                    drawn_by=tb_drawn,
+                    drg_no=tb_drgno,
+                    rev=tb_rev,
                     tx_mva=tx_mva,
                     tx_z=tx_z,
                     tx_vg=tx_vg,
@@ -333,8 +369,11 @@ with tab1:
                 ss.renderer = renderer
                 ss.params = params
 
-                # Display preview
-                st.pyplot(fig, use_container_width=True)
+                # Display preview — high-resolution PNG so zooming stays crisp
+                png_buf = io.BytesIO()
+                fig.savefig(png_buf, format='png', dpi=220, bbox_inches='tight')
+                png_buf.seek(0)
+                st.image(png_buf, use_container_width=True)
 
                 # Success message
                 st.success("✅ SLD generated successfully!")
