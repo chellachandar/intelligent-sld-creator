@@ -379,11 +379,24 @@ with tab1:
                 ss.renderer = renderer
                 ss.params = params
 
-                # Display preview — high-resolution PNG so zooming stays crisp
-                png_buf = io.BytesIO()
-                fig.savefig(png_buf, format='png', dpi=220, bbox_inches='tight')
-                png_buf.seek(0)
-                st.image(png_buf, use_container_width=True)
+                # Display preview as SVG (VECTOR) — stays sharp at any zoom,
+                # exactly like the PDF / CAD output (no pixel blurring).
+                import streamlit.components.v1 as components
+                svg_buf = io.StringIO()
+                fig.savefig(svg_buf, format='svg')
+                svg_data = svg_buf.getvalue()
+                svg_inline = svg_data[svg_data.find('<svg'):]
+                html = (
+                    "<div style='width:100%;overflow:auto;border:1px solid "
+                    "#ccc;background:#fff;'>"
+                    "<style>svg{width:100%;height:auto;}</style>"
+                    f"{svg_inline}</div>"
+                )
+                components.html(html, height=640, scrolling=True)
+                st.caption(
+                    "🔍 Vector preview (SVG) — zoom stays sharp. "
+                    "PDF & DXF downloads are fully vector and CAD-editable."
+                )
 
                 # Success message
                 st.success("✅ SLD generated successfully!")
