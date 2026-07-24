@@ -50,39 +50,39 @@ class ComponentDrawer:
     def draw_breaker(ax, x, y, label, fs):
         ax.add_patch(Rectangle((x - 0.1, y - 0.2), 0.2, 0.4, fill=False,
                                edgecolor='black', linewidth=LW))
-        ax.plot([x, x], [y + .2, y + 1], color='red', linewidth=LW)
-        ax.plot([x, x], [y - .2, y - 1], color='red', linewidth=LW)
+        ax.plot([x, x], [y + .2, y + 1], color='black', linewidth=LW)
+        ax.plot([x, x], [y - .2, y - 1], color='black', linewidth=LW)
         ax.text(x + .25, y, label, fontsize=fs, ha='left', va='center')
 
     @staticmethod
     def draw_breaker_coupler(ax, x, y, label, fs):
         ax.add_patch(Rectangle((x - 0.1, y - 0.2), 0.2, 0.4, fill=False,
                                edgecolor='black', linewidth=LW))
-        ax.plot([x - .45, x - .1], [y, y], color='red', linewidth=LW)
-        ax.plot([x + .1, x + .45], [y, y], color='red', linewidth=LW)
+        ax.plot([x - .45, x - .1], [y, y], color='black', linewidth=LW)
+        ax.plot([x + .1, x + .45], [y, y], color='black', linewidth=LW)
         ax.text(x, y + .45, label, fontsize=fs, ha='center')
 
     # ---------------- ISOLATORS ----------------
     @staticmethod
     def draw_isolator(ax, x, y, label, fs):
         """Vertical isolator: stub, two contact circles, open blade, stub."""
-        ax.plot([x, x], [y - .12, y + .4], color='red', linewidth=LW)
+        ax.plot([x, x], [y - .12, y + .4], color='black', linewidth=LW)
         ax.text(x + .12, y - .32, label, fontsize=fs, ha='left')
         ax.add_patch(Arc((x, y - 0.15), width=0.05, height=0.1,
-                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+                         angle=0, theta1=0, theta2=360, color='black', linewidth=LW))
         ax.add_patch(Arc((x, y - 0.65), width=0.05, height=0.1,
-                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
-        ax.plot([x - .06, x + .06], [y - .58, y - .22], color='red', linewidth=LW)
-        ax.plot([x, x], [y - .7, y - 1.2], color='red', linewidth=LW)
+                         angle=0, theta1=0, theta2=360, color='black', linewidth=LW))
+        ax.plot([x - .06, x + .06], [y - .58, y - .22], color='black', linewidth=LW)
+        ax.plot([x, x], [y - .7, y - 1.2], color='black', linewidth=LW)
 
     @staticmethod
     def draw_isolator_h(ax, x, y, label, fs):
         """Horizontal isolator (bus sectionalizer)."""
         ax.add_patch(Arc((x - 0.25, y), width=0.1, height=0.05,
-                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+                         angle=0, theta1=0, theta2=360, color='black', linewidth=LW))
         ax.add_patch(Arc((x + 0.25, y), width=0.1, height=0.05,
-                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
-        ax.plot([x - .2, x + .15], [y, y + .25], color='red', linewidth=LW)
+                         angle=0, theta1=0, theta2=360, color='black', linewidth=LW))
+        ax.plot([x - .2, x + .15], [y, y + .25], color='black', linewidth=LW)
         ax.text(x, y + .35, label, fontsize=fs, ha='center')
 
     # ---------------- EARTH SWITCH ----------------
@@ -90,16 +90,16 @@ class ComponentDrawer:
     def earth_sh(ax, x, y, label, fs):
         """Earth switch hanging left of a point on the stem."""
         y = y - .2
-        ax.plot([x, x - .2], [y - .6, y - .6], color='red', linewidth=LW)
+        ax.plot([x, x - .2], [y - .6, y - .6], color='black', linewidth=LW)
         ax.add_patch(Arc((x - .2, y - .45 - 0.15), width=0.05, height=0.1,
-                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+                         angle=0, theta1=0, theta2=360, color='black', linewidth=LW))
         ax.add_patch(Arc((x - .35, y - .45 - 0.15), width=0.05, height=0.1,
-                         angle=0, theta1=0, theta2=360, color='green', linewidth=LW))
-        ax.plot([x - .2, x - .35], [y - .35, y - .6], color='green', linewidth=LW)
-        ax.plot([x - .35, x - .5], [y - .6, y - .6], color='green', linewidth=LW)
-        ax.plot([x - .5, x - .5], [y - .45, y - .75], color='green', linewidth=LW)
-        ax.plot([x - .55, x - .55], [y - .5, y - .7], color='green', linewidth=LW)
-        ax.plot([x - .6, x - .6], [y - .55, y - .65], color='green', linewidth=LW)
+                         angle=0, theta1=0, theta2=360, color='black', linewidth=LW))
+        ax.plot([x - .2, x - .35], [y - .35, y - .6], color='black', linewidth=LW)
+        ax.plot([x - .35, x - .5], [y - .6, y - .6], color='black', linewidth=LW)
+        ax.plot([x - .5, x - .5], [y - .45, y - .75], color='black', linewidth=LW)
+        ax.plot([x - .55, x - .55], [y - .5, y - .7], color='black', linewidth=LW)
+        ax.plot([x - .6, x - .6], [y - .55, y - .65], color='black', linewidth=LW)
         ax.text(x - .42, y - .3, label, fontsize=fs, ha='center')
 
     # ---------------- INSTRUMENT TRANSFORMERS ----------------
@@ -107,87 +107,87 @@ class ComponentDrawer:
     def draw_ct(ax, x, y, label, fs):
         spacing = 0.75
         ax.add_patch(Arc((x + .03, y - spacing / 4), width=0.2, height=0.4,
-                         angle=0, theta1=80, theta2=280, color='blue', linewidth=LW))
+                         angle=0, theta1=80, theta2=280, color='black', linewidth=LW))
         ax.add_patch(Arc((x + .03, y + spacing / 4), width=0.2, height=0.4,
-                         angle=0, theta1=80, theta2=280, color='blue', linewidth=LW))
+                         angle=0, theta1=80, theta2=280, color='black', linewidth=LW))
         ax.text(x - .15, y, label, fontsize=fs, ha='right', va='center')
 
     @staticmethod
     def draw_wt(ax, x, y, label, fs):
         ax.add_patch(Arc((x, y - 0.15), width=0.2, height=0.4,
-                         angle=0, theta1=90, theta2=360, color='red', linewidth=LW))
-        ax.plot([x, x + .1], [y - .15, y - .15], color='red', linewidth=LW)
+                         angle=0, theta1=90, theta2=360, color='black', linewidth=LW))
+        ax.plot([x, x + .1], [y - .15, y - .15], color='black', linewidth=LW)
         ax.text(x - .15, y, label, fontsize=fs, ha='right', va='center')
 
     @staticmethod
     def draw_cvt(ax, x, y, label, fs):
         """Capacitive voltage transformer (proven multi-stage symbol)."""
         y = y - .2
-        ax.plot([x, x + .15], [y - .6, y - .6], color='red', linewidth=LW)
-        ax.plot([x + .15, x + .15], [y - .45, y - .75], color='red', linewidth=LW)
-        ax.plot([x + .2, x + .2], [y - .45, y - .75], color='red', linewidth=LW)
-        ax.plot([x + .2, x + .55], [y - .6, y - .6], color='red', linewidth=LW)
-        ax.plot([x + .55, x + .55], [y - .45, y - .75], color='red', linewidth=LW)
-        ax.plot([x + .6, x + .6], [y - .45, y - .75], color='red', linewidth=LW)
-        ax.plot([x + .6, x + .7], [y - .6, y - .6], color='red', linewidth=LW)
-        ax.plot([x + .7, x + .7], [y - .45, y - .75], color='green', linewidth=LW)
-        ax.plot([x + .75, x + .75], [y - .5, y - .7], color='green', linewidth=LW)
-        ax.plot([x + .8, x + .8], [y - .55, y - .65], color='green', linewidth=LW)
-        ax.plot([x + .375, x + .375], [y - .6, y - 1.4], color='red', linewidth=LW)
-        ax.plot([x + .375, x + .45], [y - 1.4, y - 1.4], color='red', linewidth=LW)
+        ax.plot([x, x + .15], [y - .6, y - .6], color='black', linewidth=LW)
+        ax.plot([x + .15, x + .15], [y - .45, y - .75], color='black', linewidth=LW)
+        ax.plot([x + .2, x + .2], [y - .45, y - .75], color='black', linewidth=LW)
+        ax.plot([x + .2, x + .55], [y - .6, y - .6], color='black', linewidth=LW)
+        ax.plot([x + .55, x + .55], [y - .45, y - .75], color='black', linewidth=LW)
+        ax.plot([x + .6, x + .6], [y - .45, y - .75], color='black', linewidth=LW)
+        ax.plot([x + .6, x + .7], [y - .6, y - .6], color='black', linewidth=LW)
+        ax.plot([x + .7, x + .7], [y - .45, y - .75], color='black', linewidth=LW)
+        ax.plot([x + .75, x + .75], [y - .5, y - .7], color='black', linewidth=LW)
+        ax.plot([x + .8, x + .8], [y - .55, y - .65], color='black', linewidth=LW)
+        ax.plot([x + .375, x + .375], [y - .6, y - 1.4], color='black', linewidth=LW)
+        ax.plot([x + .375, x + .45], [y - 1.4, y - 1.4], color='black', linewidth=LW)
         ax.add_patch(Arc((x + .45, y - 1.4 - 0.1125), width=0.1, height=0.2,
-                         angle=0, theta1=270, theta2=90, color='red', linewidth=LW))
+                         angle=0, theta1=270, theta2=90, color='black', linewidth=LW))
         ax.add_patch(Arc((x + .45, y - 1.4 + 0.1125), width=0.1, height=0.2,
-                         angle=0, theta1=270, theta2=90, color='red', linewidth=LW))
-        ax.plot([x + .575, x + .575], [y - 1, y - 1.7], color='red', linewidth=LW)
-        ax.plot([x + .55, x + .55], [y - 1, y - 1.7], color='red', linewidth=LW)
+                         angle=0, theta1=270, theta2=90, color='black', linewidth=LW))
+        ax.plot([x + .575, x + .575], [y - 1, y - 1.7], color='black', linewidth=LW)
+        ax.plot([x + .55, x + .55], [y - 1, y - 1.7], color='black', linewidth=LW)
         spacing = 0.25
         for cy in (y - 1.1 - spacing / 4, y - 1.025 + spacing / 4,
                    y - 1.6 + spacing / 4, y - 1.8 + spacing / 4):
             ax.add_patch(Arc((x + .675, cy), width=0.1, height=0.2,
-                             angle=0, theta1=80, theta2=280, color='red', linewidth=LW))
+                             angle=0, theta1=80, theta2=280, color='black', linewidth=LW))
         ax.text(x + .4, y - .35, label, fontsize=fs, ha='center')
 
     # ---------------- LIGHTNING ARRESTER ----------------
     @staticmethod
     def draw_la(ax, x, y, label, fs):
         y = y - .2
-        ax.plot([x - .9, x], [y, y], color='red', linewidth=LW)
-        ax.plot([x - .9, x - .9], [y + .2, y - .2], color='green', linewidth=LW)
-        ax.plot([x - .95, x - .95], [y + .15, y - .15], color='green', linewidth=LW)
-        ax.plot([x - 1, x - 1], [y + .1, y - .1], color='green', linewidth=LW)
+        ax.plot([x - .9, x], [y, y], color='black', linewidth=LW)
+        ax.plot([x - .9, x - .9], [y + .2, y - .2], color='black', linewidth=LW)
+        ax.plot([x - .95, x - .95], [y + .15, y - .15], color='black', linewidth=LW)
+        ax.plot([x - 1, x - 1], [y + .1, y - .1], color='black', linewidth=LW)
         ax.text(x - .5, y - .62, label, fontsize=fs, ha='center')
 
     @staticmethod
     def la_comp(ax, x, y):
         """Arrester body: arrow inside a box."""
         ax.add_patch(Polygon([[x + 0.1, y + 0.1], [x - 0.1, y], [x + 0.1, y - 0.1]],
-                             closed=True, fill=True, color='red', linewidth=LW))
+                             closed=True, fill=True, color='black', linewidth=LW))
         ax.add_patch(Rectangle((x - 0.2, y - 0.2), 0.4, 0.4, fill=False,
-                               edgecolor='red', linewidth=LW))
+                               edgecolor='black', linewidth=LW))
 
     # ---------------- POWER EQUIPMENT ----------------
     @staticmethod
     def draw_ict(ax, x, y, label, fs):
         """Interconnecting / power transformer (two interlaced windings)."""
         ax.add_patch(Arc((x, y - 0.15), width=0.3, height=0.6,
-                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+                         angle=0, theta1=0, theta2=360, color='black', linewidth=LW))
         ax.add_patch(Arc((x - .15, y - 0.15), width=0.2, height=0.4,
-                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+                         angle=0, theta1=0, theta2=360, color='black', linewidth=LW))
         ax.add_patch(Arc((x, y - .255 - 0.15), width=0.4, height=1.2,
-                         angle=0, theta1=270, theta2=90, color='red', linewidth=LW))
+                         angle=0, theta1=270, theta2=90, color='black', linewidth=LW))
         ax.text(x - .3, y - .7, label, fontsize=fs, ha='center')
 
     @staticmethod
     def draw_reacter(ax, x, y, label, fs):
         ax.add_patch(Arc((x - .025, y - .05), width=0.2, height=0.4,
-                         angle=0, theta1=80, theta2=300, color='red', linewidth=LW))
+                         angle=0, theta1=80, theta2=300, color='black', linewidth=LW))
         ax.add_patch(Arc((x - .025, y - .3), width=0.2, height=0.4,
-                         angle=0, theta1=60, theta2=300, color='red', linewidth=LW))
+                         angle=0, theta1=60, theta2=300, color='black', linewidth=LW))
         ax.add_patch(Arc((x - .025, y - .55), width=0.2, height=0.4,
-                         angle=0, theta1=60, theta2=300, color='red', linewidth=LW))
+                         angle=0, theta1=60, theta2=300, color='black', linewidth=LW))
         ax.add_patch(Arc((x - .025, y - .8), width=0.2, height=0.4,
-                         angle=0, theta1=60, theta2=280, color='red', linewidth=LW))
+                         angle=0, theta1=60, theta2=280, color='black', linewidth=LW))
         ax.text(x - .45, y - .8, label, fontsize=fs, ha='center')
 
     @staticmethod
@@ -195,45 +195,45 @@ class ComponentDrawer:
         """ICT/power transformer: two overlapping winding circles
         (approved representation)."""
         ax.add_patch(Arc((x, y), width=0.6, height=0.6,
-                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+                         angle=0, theta1=0, theta2=360, color='black', linewidth=LW))
         ax.add_patch(Arc((x, y - 0.4), width=0.6, height=0.6,
-                         angle=0, theta1=0, theta2=360, color='red', linewidth=LW))
+                         angle=0, theta1=0, theta2=360, color='black', linewidth=LW))
         ax.text(x - 0.4, y - 0.2, label, fontsize=fs, ha='right', va='center')
 
     @staticmethod
     def draw_bus_vt(ax, x, y, label, fs):
         """Bus VT — CVT winding assembly WITHOUT the capacitor divider."""
-        ax.plot([x, x], [y, y - 0.45], color='red', linewidth=LW)
-        ax.plot([x, x + .075], [y - .45, y - .45], color='red', linewidth=LW)
+        ax.plot([x, x], [y, y - 0.45], color='black', linewidth=LW)
+        ax.plot([x, x + .075], [y - .45, y - .45], color='black', linewidth=LW)
         ax.add_patch(Arc((x + .075, y - .45 - 0.1125), width=0.1, height=0.2,
-                         angle=0, theta1=270, theta2=90, color='red', linewidth=LW))
+                         angle=0, theta1=270, theta2=90, color='black', linewidth=LW))
         ax.add_patch(Arc((x + .075, y - .45 + 0.1125), width=0.1, height=0.2,
-                         angle=0, theta1=270, theta2=90, color='red', linewidth=LW))
-        ax.plot([x + .2, x + .2], [y - .05, y - .75], color='red', linewidth=LW)
-        ax.plot([x + .175, x + .175], [y - .05, y - .75], color='red', linewidth=LW)
+                         angle=0, theta1=270, theta2=90, color='black', linewidth=LW))
+        ax.plot([x + .2, x + .2], [y - .05, y - .75], color='black', linewidth=LW)
+        ax.plot([x + .175, x + .175], [y - .05, y - .75], color='black', linewidth=LW)
         for cy in (y - .2125, y - .0125, y - .5875, y - .7875):
             ax.add_patch(Arc((x + .3, cy), width=0.1, height=0.2,
-                             angle=0, theta1=80, theta2=280, color='red', linewidth=LW))
+                             angle=0, theta1=80, theta2=280, color='black', linewidth=LW))
         ax.text(x - .12, y - .45, label, fontsize=fs, ha='right', va='center')
 
     @staticmethod
     def draw_ngr(ax, x, y, fs):
         """Neutral grounding reactor (small 2-turn coil)."""
         ax.add_patch(Arc((x, y - .05), width=0.14, height=0.24,
-                         angle=0, theta1=60, theta2=300, color='red', linewidth=LW))
+                         angle=0, theta1=60, theta2=300, color='black', linewidth=LW))
         ax.add_patch(Arc((x, y - .25), width=0.14, height=0.24,
-                         angle=0, theta1=60, theta2=280, color='red', linewidth=LW))
+                         angle=0, theta1=60, theta2=280, color='black', linewidth=LW))
         ax.text(x + .18, y - .15, "NGR", fontsize=fs, ha='left')
 
     @staticmethod
     def draw_gantry(ax, x, y, label, fs):
         """OHL termination gantry (beam + legs + X-brace)."""
-        ax.plot([x, x], [y + .12, y], color='red', linewidth=LW)
-        ax.plot([x - .3, x + .3], [y, y], color='red', linewidth=LW)
-        ax.plot([x - .25, x - .25], [y, y - .35], color='red', linewidth=LW)
-        ax.plot([x + .25, x + .25], [y, y - .35], color='red', linewidth=LW)
-        ax.plot([x - .25, x + .25], [y, y - .35], color='red', linewidth=LW)
-        ax.plot([x + .25, x - .25], [y, y - .35], color='red', linewidth=LW)
+        ax.plot([x, x], [y + .12, y], color='black', linewidth=LW)
+        ax.plot([x - .3, x + .3], [y, y], color='black', linewidth=LW)
+        ax.plot([x - .25, x - .25], [y, y - .35], color='black', linewidth=LW)
+        ax.plot([x + .25, x + .25], [y, y - .35], color='black', linewidth=LW)
+        ax.plot([x - .25, x + .25], [y, y - .35], color='black', linewidth=LW)
+        ax.plot([x + .25, x - .25], [y, y - .35], color='black', linewidth=LW)
         if label:
             ax.text(x + .4, y - .15, label, fontsize=fs, ha='left')
 
@@ -241,10 +241,10 @@ class ComponentDrawer:
     def draw_cable_termination(ax, x, y, label, fs):
         """Cable sealing end: cone + cable tail with hook."""
         ax.add_patch(Polygon([[x - 0.1, y], [x + 0.1, y], [x, y - 0.4]],
-                             closed=True, fill=False, edgecolor='red', linewidth=LW))
-        ax.plot([x, x], [y - .4, y - .7], color='red', linewidth=LW)
+                             closed=True, fill=False, edgecolor='black', linewidth=LW))
+        ax.plot([x, x], [y - .4, y - .7], color='black', linewidth=LW)
         ax.add_patch(Arc((x + 0.08, y - 0.7), width=0.16, height=0.16,
-                         angle=0, theta1=180, theta2=270, color='red', linewidth=LW))
+                         angle=0, theta1=180, theta2=270, color='black', linewidth=LW))
         if label:
             ax.text(x + .2, y - .3, label, fontsize=fs, ha='left')
 
@@ -253,21 +253,21 @@ class ComponentDrawer:
     def draw_symbol(ax, x, y, label, fs):
         """Down arrow — outgoing feeder."""
         ax.add_patch(Polygon([[x, y - 0.1], [x + 0.1, y + 0.1], [x - 0.1, y + 0.1]],
-                             closed=True, fill=False, edgecolor='red', linewidth=LW))
+                             closed=True, fill=False, edgecolor='black', linewidth=LW))
 
     @staticmethod
     def draw_symbol_upp(ax, x, y, label, fs):
         """Up arrow — incoming feeder."""
         ax.add_patch(Polygon([[x, y + 0.1], [x + 0.1, y - 0.1], [x - 0.1, y - 0.1]],
-                             closed=True, fill=False, edgecolor='red', linewidth=LW))
+                             closed=True, fill=False, edgecolor='black', linewidth=LW))
 
     @staticmethod
     def draw_earth_symbol(ax, x, y, label, fs):
-        ax.plot([x - .125, x + .125], [y + .1, y + .1], color='green', linewidth=LW)
-        ax.plot([x - .1, x + .1], [y, y], color='green', linewidth=LW)
-        ax.plot([x - .075, x + .075], [y - .1, y - .1], color='green', linewidth=LW)
-        ax.plot([x - .05, x + .05], [y - .2, y - .2], color='green', linewidth=LW)
-        ax.plot([x - .025, x + .025], [y - .3, y - .3], color='green', linewidth=LW)
+        ax.plot([x - .125, x + .125], [y + .1, y + .1], color='black', linewidth=LW)
+        ax.plot([x - .1, x + .1], [y, y], color='black', linewidth=LW)
+        ax.plot([x - .075, x + .075], [y - .1, y - .1], color='black', linewidth=LW)
+        ax.plot([x - .05, x + .05], [y - .2, y - .2], color='black', linewidth=LW)
+        ax.plot([x - .025, x + .025], [y - .3, y - .3], color='black', linewidth=LW)
 
     @staticmethod
     def draw_name(ax, x, y, label, fs):

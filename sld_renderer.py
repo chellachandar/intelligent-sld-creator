@@ -26,6 +26,10 @@ from ezdxf.enums import TextEntityAlignment
 
 from config_components import ComponentDrawer as D, LW, BUS_LW
 
+# AutoCAD .dwg-style lettering (monospace stroke font look)
+plt.rcParams['font.family'] = 'monospace'
+plt.rcParams['font.monospace'] = ['DejaVu Sans Mono', 'Courier New', 'monospace']
+
 
 # ============================================================================
 # DXF EXPORT (proven engine from original Final_DXF.py)
@@ -183,7 +187,7 @@ class SLDGenerationParams:
     cable_names: List[str] = None
     transformer_names: List[str] = None
     reactor_names: List[str] = None
-    title_text: str = "POWERGRID CORPORATION OF INDIA LTD"
+    title_text: str = "Typical Substation Single Line Diagram"
     show_legend: bool = True
     dpi: int = 300
     # Ratings
@@ -279,18 +283,18 @@ class SLDRenderer:
         y = self.bay_y
         fs = self.fs
         if self.is_double:
-            ax.plot([x, x], [y, self.bus1_y], color='red', linewidth=LW)
-            ax.plot([x + .5, x + .5], [y, self.bus2_y], color='red', linewidth=LW)
+            ax.plot([x, x], [y, self.bus1_y], color='black', linewidth=LW)
+            ax.plot([x + .5, x + .5], [y, self.bus2_y], color='black', linewidth=LW)
             D.draw_isolator(ax, x, y, f"{num}89A", fs)
             D.draw_isolator(ax, x + .5, y, f"{num}89B", fs)
             D.earth_sh(ax, x, y, f"{num}89AE", fs)
-            ax.plot([x, x + 0.5], [y - 1.2, y - 1.2], color='red', linewidth=LW)
+            ax.plot([x, x + 0.5], [y - 1.2, y - 1.2], color='black', linewidth=LW)
             self.components_count += 3
         else:
-            ax.plot([x + .25, x + .25], [y, self.bus1_y], color='red', linewidth=LW)
+            ax.plot([x + .25, x + .25], [y, self.bus1_y], color='black', linewidth=LW)
             D.draw_isolator(ax, x + .25, y, f"{num}89A", fs)
             D.earth_sh(ax, x + .25, y, f"{num}89AE", fs)
-            ax.plot([x + .25, x + .25], [y - 1.2, y - 1.2], color='red', linewidth=LW)
+            ax.plot([x + .25, x + .25], [y - 1.2, y - 1.2], color='black', linewidth=LW)
             self.components_count += 2
         D.draw_breaker(ax, x + 0.25, y - 2.2, f"{num}52", fs)
         self.components_count += 1
@@ -315,11 +319,11 @@ class SLDRenderer:
     def _bay_line(self, ax, x, num, name):
         y, fs = self.bay_y, self.fs
         self._bay_top(ax, x, num)
-        ax.plot([x + .25, x + .25], [y - 2.7, y - 4.5], color='red', linewidth=LW)
+        ax.plot([x + .25, x + .25], [y - 2.7, y - 4.5], color='black', linewidth=LW)
         D.draw_ct(ax, x + 0.25, y - 3.4, f"{num}CT", fs)
         D.draw_isolator(ax, x + 0.25, y - 4.7, f"{num}89L", fs)
         D.earth_sh(ax, x + 0.25, y - 4.85, f"{num}89LE", fs)
-        ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 10.4], color='red', linewidth=LW)
+        ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 10.4], color='black', linewidth=LW)
         D.draw_cvt(ax, x + 0.25, y - 7, f"{num}CVT", fs)
         D.draw_la(ax, x + 0.25, y - 8.5, f"{num}LA", fs)
         D.la_comp(ax, x - 0.25, y - 8.7)
@@ -332,11 +336,11 @@ class SLDRenderer:
         """Cable feeder: as line bay but no WT, ends in cable sealing end."""
         y, fs = self.bay_y, self.fs
         self._bay_top(ax, x, num)
-        ax.plot([x + .25, x + .25], [y - 2.7, y - 4.5], color='red', linewidth=LW)
+        ax.plot([x + .25, x + .25], [y - 2.7, y - 4.5], color='black', linewidth=LW)
         D.draw_ct(ax, x + 0.25, y - 3.4, f"{num}CT", fs)
         D.draw_isolator(ax, x + 0.25, y - 4.7, f"{num}89L", fs)
         D.earth_sh(ax, x + 0.25, y - 4.85, f"{num}89LE", fs)
-        ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 10.3], color='red', linewidth=LW)
+        ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 10.3], color='black', linewidth=LW)
         D.draw_cvt(ax, x + 0.25, y - 7, f"{num}CVT", fs)
         D.draw_la(ax, x + 0.25, y - 8.5, f"{num}LA", fs)
         D.la_comp(ax, x - 0.25, y - 8.7)
@@ -357,11 +361,11 @@ class SLDRenderer:
         y, fs = self.bay_y, self.fs
         p = self.params
         self._bay_top(ax, x, num)
-        ax.plot([x + .25, x + .25], [y - 2.7, y - 4.5], color='red', linewidth=LW)
+        ax.plot([x + .25, x + .25], [y - 2.7, y - 4.5], color='black', linewidth=LW)
         D.draw_ct(ax, x + 0.25, y - 3.4, f"{num}CT", fs)
         D.draw_isolator(ax, x + 0.25, y - 4.7, f"{num}89T", fs)
         D.earth_sh(ax, x + 0.25, y - 4.85, f"{num}89TE", fs)
-        ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 7.8], color='red', linewidth=LW)
+        ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 7.8], color='black', linewidth=LW)
         D.draw_la(ax, x + 0.25, y - 6.6, f"{num}LA", fs)
         D.la_comp(ax, x - 0.25, y - 6.8)
         D.draw_ict3(ax, x + 0.25, y - 8.1, f"{num}ICT", fs)
@@ -372,7 +376,7 @@ class SLDRenderer:
         block = (f"Tr.{idx + 1}\n{r['mva']}MVA\n{ratio}\n"
                  f"%Z={r['z']}\n{r['vg']}")
         ax.text(x + 0.65, y - 7.75, block, fontsize=fs, ha='left', va='top')
-        ax.plot([x + 0.25, x + 0.25], [y - 8.8, y - 10.1], color='red', linewidth=LW)
+        ax.plot([x + 0.25, x + 0.25], [y - 8.8, y - 10.1], color='black', linewidth=LW)
         D.draw_symbol(ax, x + 0.25, y - 10.2, "", fs)
         if self.is_dual_voltage:
             ax.text(x + 0.25, y - 10.75, f"TO {int(p.lv_voltage)}kV",
@@ -384,11 +388,11 @@ class SLDRenderer:
         y, fs = self.bay_y, self.fs
         p = self.params
         self._bay_top(ax, x, num)
-        ax.plot([x + .25, x + .25], [y - 2.7, y - 4.5], color='red', linewidth=LW)
+        ax.plot([x + .25, x + .25], [y - 2.7, y - 4.5], color='black', linewidth=LW)
         D.draw_ct(ax, x + 0.25, y - 3.4, f"{num}CT", fs)
         D.draw_isolator(ax, x + 0.25, y - 4.7, f"{num}89R", fs)
         D.earth_sh(ax, x + 0.25, y - 4.85, f"{num}89RE", fs)
-        ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 7.85], color='red', linewidth=LW)
+        ax.plot([x + 0.25, x + 0.25], [y - 5.9, y - 7.85], color='black', linewidth=LW)
         D.draw_la(ax, x + 0.25, y - 6.6, f"{num}LA", fs)
         D.la_comp(ax, x - 0.25, y - 6.8)
         D.draw_reacter(ax, x + 0.25, y - 8, f"{num}R", fs)
@@ -398,9 +402,9 @@ class SLDRenderer:
                 else "80")
         block = f"R-{idx + 1}\n{mvar}MVAr\n{int(p.hv_voltage)}kV"
         ax.text(x + 0.55, y - 7.75, block, fontsize=fs, ha='left', va='top')
-        ax.plot([x + 0.25, x + 0.25], [y - 9, y - 9.55], color='red', linewidth=LW)
+        ax.plot([x + 0.25, x + 0.25], [y - 9, y - 9.55], color='black', linewidth=LW)
         D.draw_ngr(ax, x + 0.25, y - 9.6, fs)
-        ax.plot([x + 0.25, x + 0.25], [y - 9.95, y - 10.15], color='red', linewidth=LW)
+        ax.plot([x + 0.25, x + 0.25], [y - 9.95, y - 10.15], color='black', linewidth=LW)
         D.draw_earth_symbol(ax, x + 0.25, y - 10.25, "", fs)
         self.components_count += 6
         self._bay_label(ax, x, num, name)
@@ -408,10 +412,10 @@ class SLDRenderer:
     def _bay_coupler(self, ax, x, name):
         y, fs = self.bay_y, self.fs
         pref = self._num_prefix()
-        ax.plot([x - .2, x - .2], [y - .3, self.bus1_y], color='red', linewidth=LW)
-        ax.plot([x + .7, x + .7], [y - .3, self.bus2_y], color='red', linewidth=LW)
-        ax.plot([x - .2, x - .2], [y - 4, y - 1.5], color='red', linewidth=LW)
-        ax.plot([x + .7, x + .7], [y - 4, y - 1.5], color='red', linewidth=LW)
+        ax.plot([x - .2, x - .2], [y - .3, self.bus1_y], color='black', linewidth=LW)
+        ax.plot([x + .7, x + .7], [y - .3, self.bus2_y], color='black', linewidth=LW)
+        ax.plot([x - .2, x - .2], [y - 4, y - 1.5], color='black', linewidth=LW)
+        ax.plot([x + .7, x + .7], [y - 4, y - 1.5], color='black', linewidth=LW)
         D.draw_isolator(ax, x - .2, y - .3, f"{pref}0089A", fs)
         D.draw_isolator(ax, x + .7, y - .3, f"{pref}0089B", fs)
         D.earth_sh(ax, x - .2, y - .5, f"{pref}0089AE", fs)
@@ -430,7 +434,7 @@ class SLDRenderer:
         hv = int(self.params.hv_voltage)
 
         def one(xb, yb, tag):
-            ax.plot([xb, xb], [yb, yb - 0.4], color='red', linewidth=LW)
+            ax.plot([xb, xb], [yb, yb - 0.4], color='black', linewidth=LW)
             D.draw_isolator(ax, xb, yb - 0.4, f"{tag}-89V", fs)
             D.earth_sh(ax, xb, yb - 0.7, f"{tag}-89E", fs)
             D.draw_bus_vt(ax, xb, yb - 1.6, f"{tag} VT", fs)
@@ -454,16 +458,16 @@ class SLDRenderer:
                                  (self.bus2_y, 'green', 'BUS-2')):
                 ax.plot([1, xm - 0.6], [yb, yb], color=col, linewidth=BUS_LW)
                 ax.plot([xm + 0.6, x_end], [yb, yb], color=col, linewidth=BUS_LW)
-                ax.plot([xm - 0.6, xm - 0.3], [yb, yb], color='red', linewidth=LW)
-                ax.plot([xm + 0.3, xm + 0.6], [yb, yb], color='red', linewidth=LW)
+                ax.plot([xm - 0.6, xm - 0.3], [yb, yb], color='black', linewidth=LW)
+                ax.plot([xm + 0.3, xm + 0.6], [yb, yb], color='black', linewidth=LW)
                 D.draw_isolator_h(ax, xm, yb, f"89S {tag}", fs)
                 self.components_count += 1
         else:
             ax.plot([1, x_end], [self.bus1_y, self.bus1_y],
-                    color='blue', linewidth=BUS_LW)
+                    color='black', linewidth=BUS_LW)
             if self.is_double:
                 ax.plot([1, x_end], [self.bus2_y, self.bus2_y],
-                        color='green', linewidth=BUS_LW)
+                        color='black', linewidth=BUS_LW)
 
         ka = self.params.bus_fault_ka
         sec = self.params.bus_fault_sec
@@ -471,10 +475,10 @@ class SLDRenderer:
         sec_s = f"{int(sec)}" if float(sec).is_integer() else f"{sec}"
         rating = f"{hv}kV, {ka_s}kA, {sec_s}Sec"
         ax.text(1.1, self.bus1_y + 0.3, f"BUS-1  {rating}",
-                fontsize=fs + 3, color='blue', fontweight='bold')
+                fontsize=fs + 3, color='black', fontweight='bold')
         if self.is_double:
             ax.text(1.1, self.bus2_y - 0.55, f"BUS-2  {rating}",
-                    fontsize=fs + 3, color='green', fontweight='bold')
+                    fontsize=fs + 3, color='black', fontweight='bold')
         return x_end
 
     # ------------------------------------------------------------------

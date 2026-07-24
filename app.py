@@ -85,14 +85,14 @@ with st.sidebar:
     with col1:
         substation_name = st.text_input(
             "Substation Name",
-            value="YELAHANKA SUBSTATION",
-            help="Name of the substation"
+            value="",
+            help="Leave blank for auto: e.g. 400/220kV Standard Substation"
         )
 
     with col2:
         title_text = st.text_input(
             "Title",
-            value="POWERGRID CORPORATION OF INDIA LTD",
+            value="Typical Substation Single Line Diagram",
             help="Header text for SLD"
         )
 
@@ -298,8 +298,13 @@ with tab1:
         with st.spinner("⚙️ Generating SLD..."):
             try:
                 # Create parameters
+                auto_name = (
+                    f"{int(hv_voltage)}/{int(lv_voltage)}kV Standard Substation"
+                    if lv_voltage
+                    else f"{int(hv_voltage)}kV Standard Substation"
+                )
                 params = SLDGenerationParams(
-                    substation_name=substation_name,
+                    substation_name=substation_name.strip() or auto_name,
                     hv_voltage=float(hv_voltage),
                     lv_voltage=float(lv_voltage) if lv_voltage else None,
                     configuration=configuration,
