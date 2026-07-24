@@ -250,6 +250,7 @@ class SLDRenderer:
         self.bay_y = 8.2
         self.gap = 2.0
         self.x_start = 5.0
+        self.bus_left = 3.0     # equal left/right bus margin (=2 each)
         self.fs = 5
 
     # ------------------------------------------------------------------
@@ -469,6 +470,8 @@ class SLDRenderer:
 
     # ------------------------------------------------------------------
     def _draw_bus_aux(self, ax, x_end):
+        """Bus VTs at the RIGHT end so the left margin is free for the
+        BUS rating labels (no overlap)."""
         fs = self.fs
 
         def one(xb, yb, tag):
@@ -478,14 +481,18 @@ class SLDRenderer:
             D.draw_bus_vt(ax, xb, yb - 1.6, f"{tag} VT", fs)
             self.components_count += 3
 
-        one(3.9, self.bus1_y, "B1")
+        one(x_end - 2.1, self.bus1_y, "B1")
         if self.is_double:
-            one(x_end - 1.0, self.bus2_y, "B2")
+            one(x_end - 0.7, self.bus2_y, "B2")
 
     # ------------------------------------------------------------------
     def _draw_buses(self, ax, n_bays):
         p = self.params
-        x_end = self.x_start + n_bays * self.gap + 0.5
+        bl = self.bus_left
+        # symmetric margins: right end mirrors the left margin (=2)
+        x_end = self.x_start + (n_bays - 1) * self.gap + (self.x_start - bl)
+        if self.is_double:
+            x_end += 0.5
         hv = int(p.hv_voltage)
         fs = self.fs
 
@@ -499,10 +506,15 @@ class SLDRenderer:
                   and p.configuration == 'double_bus_sectionalizer'
                   and n_bays > 1)
 
+        # Labels sit ABOVE bus-1 / BELOW bus-2 at the far left (clear zone)
+        def label(txt, y_above):
+            yy = (self.bus1_y + 0.35) if y_above else (self.bus2_y - 0.55)
+            ax.text(bl, yy, txt, fontsize=fs + 2, color='black',
+                    fontweight='bold', ha='left', va='center')
+
         def split_bus(yb, s_label):
             xm = self.x_start + self._split_index * self.gap - 0.75
-            ax.plot([1, xm - 0.45], [yb, yb], color='black',
-                    linewidth=BUS_LW)
+            ax.plot([bl, xm - 0.45], [yb, yb], color='black', linewidth=BUS_LW)
             ax.plot([xm + 0.45, x_end], [yb, yb], color='black',
                     linewidth=BUS_LW)
             ax.plot([xm - 0.45, xm - 0.28], [yb, yb], color='black',
@@ -516,31 +528,28 @@ class SLDRenderer:
         if is_sec:
             sec2 = int(getattr(p, 'sectionalizer_count', 2)) >= 2
             xm1 = split_bus(self.bus1_y, "89S-1")
-            ax.text(1.1, self.bus1_y + 0.3, f"BUS-1A  {rating}",
-                    fontsize=fs + 3, color='black', fontweight='bold')
-            ax.text(xm1 + 0.55, self.bus1_y + 0.3, f"BUS-1B  {rating}",
-                    fontsize=fs + 3, color='black', fontweight='bold')
+            label(f"BUS-1A  {rating}", True)
+            ax.text(xm1 + 0.6, self.bus1_y + 0.35, "BUS-1B",
+                    fontsize=fs + 2, color='black', fontweight='bold',
+                    ha='left', va='center')
             if sec2:
                 xm2 = split_bus(self.bus2_y, "89S-2")
-                ax.text(1.1, self.bus2_y - 0.55, f"BUS-2A  {rating}",
-                        fontsize=fs + 3, color='black', fontweight='bold')
-                ax.text(xm2 + 0.55, self.bus2_y - 0.55, f"BUS-2B  {rating}",
-                        fontsize=fs + 3, color='black', fontweight='bold')
+                label(f"BUS-2A  {rating}", False)
+                ax.text(xm2 + 0.6, self.bus2_y - 0.55, "BUS-2B",
+                        fontsize=fs + 2, color='black', fontweight='bold',
+                        ha='left', va='center')
             else:
-                ax.plot([1, x_end], [self.bus2_y, self.bus2_y],
+                ax.plot([bl, x_end], [self.bus2_y, self.bus2_y],
                         color='black', linewidth=BUS_LW)
-                ax.text(1.1, self.bus2_y - 0.55, f"BUS-2  {rating}",
-                        fontsize=fs + 3, color='black', fontweight='bold')
+                label(f"BUS-2  {rating}", False)
         else:
-            ax.plot([1, x_end], [self.bus1_y, self.bus1_y],
+            ax.plot([bl, x_end], [self.bus1_y, self.bus1_y],
                     color='black', linewidth=BUS_LW)
-            ax.text(1.1, self.bus1_y + 0.3, f"BUS-1  {rating}",
-                    fontsize=fs + 3, color='black', fontweight='bold')
+            label(f"BUS-1  {rating}", True)
             if self.is_double:
-                ax.plot([1, x_end], [self.bus2_y, self.bus2_y],
+                ax.plot([bl, x_end], [self.bus2_y, self.bus2_y],
                         color='black', linewidth=BUS_LW)
-                ax.text(1.1, self.bus2_y - 0.55, f"BUS-2  {rating}",
-                        fontsize=fs + 3, color='black', fontweight='bold')
+                label(f"BUS-2  {rating}", False)
         return x_end
 
     # ------------------------------------------------------------------
@@ -597,13 +606,21 @@ class SLDRenderer:
                                       angle=0, theta1=0, theta2=360,
                                       color='black', linewidth=LWm))
         elif key == 'vt':
-            ln(cx - 0.2, cy + 0.75, cx - 0.2, cy + 0.25)
-            pg.add_patch(mpatches.Arc((cx - 0.2, cy + 0.05), 0.4, 0.4,
-                                      angle=0, theta1=0, theta2=360,
+            # Match drawing bus-VT: winding arcs (CVT style w/o caps)
+            ln(cx, cy + 0.75, cx, cy + 0.45)
+            ln(cx, cy + 0.45, cx + 0.1, cy + 0.45)
+            pg.add_patch(mpatches.Arc((cx + 0.1, cy + 0.33), 0.16, 0.24,
+                                      angle=0, theta1=270, theta2=90,
                                       color='black', linewidth=LWm))
-            pg.add_patch(mpatches.Arc((cx - 0.2, cy - 0.35), 0.4, 0.4,
-                                      angle=0, theta1=0, theta2=360,
+            pg.add_patch(mpatches.Arc((cx + 0.1, cy + 0.57), 0.16, 0.24,
+                                      angle=0, theta1=270, theta2=90,
                                       color='black', linewidth=LWm))
+            ln(cx + 0.28, cy + 0.72, cx + 0.28, cy - 0.2)
+            for k in range(4):
+                pg.add_patch(mpatches.Arc((cx + 0.42, cy + 0.35 - k * 0.22),
+                                          0.16, 0.22, angle=0,
+                                          theta1=80, theta2=280,
+                                          color='black', linewidth=LWm))
         elif key == 'la':
             ln(cx + 0.35, cy, cx + 0.8, cy)
             pg.add_patch(mpatches.Rectangle((cx - 0.35, cy - 0.25), 0.7, 0.5,
@@ -637,7 +654,7 @@ class SLDRenderer:
 
     def _draw_legend(self, pg):
         """Legend as bordered tables, bottom-left (SYMBOL | DESCRIPTION)."""
-        pg.text(1.3, 10.5, "LEGEND:", fontsize=8, fontweight='bold',
+        pg.text(1.3, 10.1, "LEGEND:", fontsize=8, fontweight='bold',
                 va='bottom')
         t1 = [('isolator', "ISOLATOR (89)"),
               ('earth', "EARTH SWITCH"),
@@ -648,8 +665,8 @@ class SLDRenderer:
               ('la', "LIGHTNING ARRESTOR"),
               ('ict', "POWER TRANSFORMER (ICT)"),
               ('reactor', "SHUNT REACTOR")]
-        row_h = 1.8
-        top = 10.2
+        row_h = 1.45
+        top = 9.8
 
         def table(x0, x1, items):
             n = len(items)
@@ -694,6 +711,9 @@ class SLDRenderer:
             pg.plot([tb_x0, tb_x1], [tb_y0 + r * rh] * 2,
                     color='black', linewidth=0.6)
         pg.plot([tb_x0 + 3.0, tb_x0 + 3.0], [tb_y0, tb_y1],
+                color='black', linewidth=0.6)
+        # vertical divider segregating the DATE / SCALE columns (rows 4-5)
+        pg.plot([tb_x0 + 8.6, tb_x0 + 8.6], [tb_y0, tb_y0 + 2 * rh],
                 color='black', linewidth=0.6)
 
         date_s = datetime.date.today().strftime("%d.%m.%Y")
