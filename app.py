@@ -76,232 +76,168 @@ st.divider()
 # SIDEBAR - INPUT PARAMETERS
 # ============================================================================
 
-st.sidebar.markdown("### 🎯 **SUBSTATION CONFIGURATION**")
+st.sidebar.markdown("## ⚡ SLD Builder")
+st.sidebar.caption("Fill the steps below, then press **Generate**.")
 
-# Basic Parameters
 with st.sidebar:
-    col1, col2 = st.columns(2)
 
-    with col1:
+    # ---- STEP 1 · SUBSTATION ------------------------------------------
+    with st.expander("① Substation", expanded=True):
         substation_name = st.text_input(
             "Substation Name",
             value="",
             help="Leave blank for auto: e.g. 400/220kV Standard Substation"
         )
-
-    with col2:
         title_text = st.text_input(
-            "Title",
-            value="Typical Substation Single Line Diagram",
-            help="Header text for SLD"
+            "Drawing Title",
+            value="Typical Substation Single Line Diagram"
         )
 
-    st.divider()
-
-    # Voltage Configuration
-    st.markdown("**Voltage Configuration**")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        hv_voltage = st.selectbox(
-            "HV Voltage (kV)",
-            options=[11, 33, 66, 110, 132, 220, 400, 765],
-            index=6,  # 400kV default
-            help="High Voltage bus voltage"
-        )
-
-    with col2:
-        single_voltage = st.checkbox(
-            "Single Voltage?",
+    # ---- STEP 2 · VOLTAGE ---------------------------------------------
+    with st.expander("② Voltage Levels", expanded=True):
+        single_voltage = st.toggle(
+            "Single voltage substation",
             value=False,
-            help="Uncheck for dual-voltage (HV/LV)"
+            help="Off = dual-voltage (HV bus + LV bus via transformers)"
+        )
+        c1, c2 = st.columns(2)
+        with c1:
+            hv_voltage = st.selectbox(
+                "HV (kV)",
+                options=[11, 33, 66, 110, 132, 220, 400, 765],
+                index=6
+            )
+        with c2:
+            if not single_voltage:
+                lv_voltage = st.selectbox(
+                    "LV (kV)",
+                    options=[11, 33, 66, 110, 132, 220, 400],
+                    index=2
+                )
+            else:
+                lv_voltage = None
+                st.markdown("&nbsp;")
+
+    # ---- STEP 3 · BUS SCHEME ------------------------------------------
+    with st.expander("③ Bus Scheme", expanded=True):
+        configuration = st.radio(
+            "Configuration",
+            options=["single_bus", "double_bus_coupler",
+                     "double_bus_sectionalizer"],
+            format_func=lambda x: {
+                "single_bus": "🔌 Single Bus",
+                "double_bus_coupler": "🔀 Double Bus + Coupler",
+                "double_bus_sectionalizer": "🔀 Double Bus + Sectionalizer"
+            }[x],
         )
 
-    if not single_voltage:
-        lv_voltage = st.selectbox(
-            "LV Voltage (kV)",
-            options=[11, 33, 66, 110, 132, 220, 400],
-            index=2,  # 220kV default
-            help="Low Voltage bus voltage"
-        )
-    else:
-        lv_voltage = None
+        sectionalizer_count = 2
+        if configuration == "double_bus_sectionalizer":
+            sectionalizer_count = st.radio(
+                "Sectionalizers",
+                options=[1, 2], index=1, horizontal=True,
+                help="1 = only BUS-1 split (1A/1B). 2 = both buses split."
+            )
 
-    st.divider()
+        if configuration == "single_bus":
+            bus_coupler_count = 0
+            st.caption("Single bus — no coupler.")
+        elif configuration == "double_bus_coupler":
+            bus_coupler_count = 1
+            st.caption("Coupler scheme — exactly 1 bus coupler (fixed).")
+        else:
+            bus_coupler_count = st.radio(
+                "Bus Couplers", options=[0, 1, 2], index=2, horizontal=True,
+                help="C1 ties left sections, C2 ties right sections."
+            )
 
-    # Bus Configuration
-    st.markdown("**Bus Configuration**")
-    configuration = st.radio(
-        "Select Configuration",
-        options=["single_bus", "double_bus_coupler", "double_bus_sectionalizer"],
-        format_func=lambda x: {
-            "single_bus": "🔌 Single Bus",
-            "double_bus_coupler": "🔀 Double Bus with Coupler",
-            "double_bus_sectionalizer": "🔀 Double Bus with Sectionalizer"
-        }[x],
-        help="Bus architecture type"
-    )
+    # ---- STEP 4 · BAYS ------------------------------------------------
+    with st.expander("④ Bays", expanded=True):
+        c1, c2 = st.columns(2)
+        with c1:
+            line_bay_count = st.number_input(
+                "OHL Line", min_value=0, max_value=20, value=4,
+                help="Overhead line bays (gantry termination)")
+            reactor_bay_count = st.number_input(
+                "Reactor", min_value=0, max_value=10, value=1)
+        with c2:
+            cable_bay_count = st.number_input(
+                "Cable Feeder", min_value=0, max_value=20, value=0,
+                help="Line bays with cable sealing-end termination")
+            transformer_bay_count = st.number_input(
+                "Transformer", min_value=0, max_value=20, value=2)
+        total_bays = (line_bay_count + cable_bay_count
+                      + transformer_bay_count + reactor_bay_count
+                      + bus_coupler_count)
+        st.caption(f"Total bays: **{total_bays}**")
 
-    sectionalizer_count = 2
-    if configuration == "double_bus_sectionalizer":
-        sectionalizer_count = st.radio(
-            "Bus Sectionalizers",
-            options=[1, 2],
-            index=1,
-            horizontal=True,
-            help="1 = BUS-1 split into 1A/1B, BUS-2 continuous. "
-                 "2 = both buses split (1A/1B and 2A/2B)."
-        )
+    # ---- STEP 5 · RATINGS ---------------------------------------------
+    with st.expander("⑤ Ratings"):
+        st.markdown("**Busbar**")
+        rc1, rc2 = st.columns(2)
+        with rc1:
+            bus_fault_ka = st.number_input(
+                "S/C (kA)", min_value=10, max_value=100, value=63)
+        with rc2:
+            bus_fault_sec = st.number_input(
+                "Duration (Sec)", min_value=1, max_value=5, value=1)
 
-    st.divider()
-
-    # Bay Configuration
-    st.markdown("**Bay Configuration**")
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        line_bay_count = st.number_input(
-            "OHL Line Bays",
-            min_value=0,
-            max_value=20,
-            value=4,
-            help="Overhead line bays (gantry termination)"
-        )
-
-    with col2:
-        transformer_bay_count = st.number_input(
-            "Transformer Bays",
-            min_value=0,
-            max_value=20,
-            value=2,
-            help="Number of power transformer bays"
-        )
-
-    with col3:
-        reactor_bay_count = st.number_input(
-            "Reactor Bays",
-            min_value=0,
-            max_value=10,
-            value=1,
-            help="Number of shunt reactor bays"
-        )
-
-    cable_bay_count = st.number_input(
-        "Cable Feeder Bays",
-        min_value=0,
-        max_value=20,
-        value=0,
-        help="Line bays terminating in cable sealing ends"
-    )
-
-    bus_coupler_count = st.number_input(
-        "Bus Couplers",
-        min_value=0,
-        max_value=5,
-        value=1 if configuration != "single_bus" else 0,
-        help="Coupler scheme: exactly 1. Sectionalizer scheme: 0-2 "
-             "(C1 ties left sections, C2 ties right sections)."
-    )
-
-    if configuration == "double_bus_coupler" and bus_coupler_count != 1:
-        st.error("❌ No such configuration: 'Double Bus Bar with Coupler' "
-                 "has exactly ONE bus coupler.")
-    if configuration == "double_bus_sectionalizer" and bus_coupler_count > 2:
-        st.error("❌ No such configuration: max TWO bus couplers in "
-                 "sectionalizer scheme.")
-
-    st.divider()
-
-    # Ratings
-    st.markdown("**Ratings**")
-
-    rcol1, rcol2 = st.columns(2)
-    with rcol1:
-        bus_fault_ka = st.number_input(
-            "Bus S/C Rating (kA)", min_value=10, max_value=100, value=63,
-            help="Busbar short-circuit withstand rating")
-    with rcol2:
-        bus_fault_sec = st.number_input(
-            "S/C Duration (Sec)", min_value=1, max_value=5, value=1)
-
-    tx_mva, tx_z, tx_vg = [], [], []
-    if transformer_bay_count > 0:
-        with st.expander("Transformer ratings (per ICT)"):
+        tx_mva, tx_z, tx_vg = [], [], []
+        if transformer_bay_count > 0:
+            st.markdown("**Transformers**")
             for i in range(transformer_bay_count):
-                st.markdown(f"*Tr.{i + 1}*")
-                tc1, tc2, tc3 = st.columns(3)
-                with tc1:
+                st.caption(f"Tr.{i + 1}")
+                t1, t2, t3 = st.columns(3)
+                with t1:
                     tx_mva.append(st.text_input(
                         "MVA", "500", key=f"tx_mva_{i}"))
-                with tc2:
+                with t2:
                     tx_z.append(st.text_input(
                         "%Z", "12.5", key=f"tx_z_{i}"))
-                with tc3:
+                with t3:
                     tx_vg.append(st.text_input(
-                        "Vector Grp", "YNa0d11", key=f"tx_vg_{i}"))
+                        "Vector", "YNa0d11", key=f"tx_vg_{i}"))
 
-    reactor_mvar = []
-    if reactor_bay_count > 0:
-        with st.expander("Reactor ratings (per reactor)"):
+        reactor_mvar = []
+        if reactor_bay_count > 0:
+            st.markdown("**Reactors**")
             for i in range(reactor_bay_count):
                 reactor_mvar.append(st.text_input(
-                    f"Reactor-{i + 1} MVAr", "80", key=f"re_mvar_{i}"))
+                    f"Reactor-{i + 1} (MVAr)", "80", key=f"re_mvar_{i}"))
 
-    st.divider()
+    # ---- STEP 6 · BAY NAMES (optional) --------------------------------
+    with st.expander("⑥ Bay Names (optional)"):
+        line_names, transformer_names, reactor_names = [], [], []
+        if line_bay_count > 0:
+            st.markdown("**Line Bays**")
+            for i in range(line_bay_count):
+                nm = st.text_input(f"Line {i+1}", "", key=f"line_bay_{i}")
+                if nm:
+                    line_names.append(nm)
+        if transformer_bay_count > 0:
+            st.markdown("**Transformer Bays**")
+            for i in range(transformer_bay_count):
+                nm = st.text_input(f"Tx {i+1}", "", key=f"tx_bay_{i}")
+                if nm:
+                    transformer_names.append(nm)
+        if reactor_bay_count > 0:
+            st.markdown("**Reactor Bays**")
+            for i in range(reactor_bay_count):
+                nm = st.text_input(f"Reactor {i+1}", "", key=f"reactor_bay_{i}")
+                if nm:
+                    reactor_names.append(nm)
 
-    # Drawing details (title block)
-    st.markdown("**Drawing Details (Title Block)**")
-    with st.expander("Client / Project / Drg.No", expanded=True):
+    # ---- STEP 7 · TITLE BLOCK -----------------------------------------
+    with st.expander("⑦ Drawing Details (Title Block)"):
         tb_client = st.text_input("Client", "", key="tb_client")
         tb_project = st.text_input("Project", "", key="tb_project")
         tb_drawn = st.text_input("Drawn By", "", key="tb_drawn")
         tb_drgno = st.text_input("Drawing No.", "", key="tb_drgno")
         tb_rev = st.text_input("Rev", "1", key="tb_rev")
 
-    st.divider()
-
-    # Custom Names (Optional)
-    st.markdown("**Custom Bay Names (Optional)**")
-
-    with st.expander("Add custom names for bays"):
-        line_names = []
-        transformer_names = []
-        reactor_names = []
-
-        if line_bay_count > 0:
-            st.markdown("**Line Bay Names**")
-            for i in range(line_bay_count):
-                name = st.text_input(
-                    f"Line Bay {i+1}",
-                    value=f"",
-                    key=f"line_bay_{i}"
-                )
-                if name:
-                    line_names.append(name)
-
-        if transformer_bay_count > 0:
-            st.markdown("**Transformer Bay Names**")
-            for i in range(transformer_bay_count):
-                name = st.text_input(
-                    f"Transformer Bay {i+1}",
-                    value=f"",
-                    key=f"tx_bay_{i}"
-                )
-                if name:
-                    transformer_names.append(name)
-
-        if reactor_bay_count > 0:
-            st.markdown("**Reactor Bay Names**")
-            for i in range(reactor_bay_count):
-                name = st.text_input(
-                    f"Reactor Bay {i+1}",
-                    value=f"",
-                    key=f"reactor_bay_{i}"
-                )
-                if name:
-                    reactor_names.append(name)
+    # ---- Live validation ----------------------------------------------
+    if configuration == "double_bus_sectionalizer" and bus_coupler_count > 2:
+        st.error("❌ Max TWO bus couplers in sectionalizer scheme.")
 
 # ============================================================================
 # MAIN CONTENT
