@@ -470,8 +470,7 @@ class SLDRenderer:
 
     # ------------------------------------------------------------------
     def _draw_bus_aux(self, ax, x_end):
-        """Bus VTs at the RIGHT end so the left margin is free for the
-        BUS rating labels (no overlap)."""
+        """Bus VTs: B1 near the LEFT, B2 near the RIGHT (as before)."""
         fs = self.fs
 
         def one(xb, yb, tag):
@@ -481,7 +480,7 @@ class SLDRenderer:
             D.draw_bus_vt(ax, xb, yb - 1.6, f"{tag} VT", fs)
             self.components_count += 3
 
-        one(x_end - 2.1, self.bus1_y, "B1")
+        one(self.x_start - 0.5, self.bus1_y, "B1")
         if self.is_double:
             one(x_end - 0.7, self.bus2_y, "B2")
 
@@ -506,9 +505,9 @@ class SLDRenderer:
                   and p.configuration == 'double_bus_sectionalizer'
                   and n_bays > 1)
 
-        # Labels sit ABOVE bus-1 / BELOW bus-2 at the far left (clear zone)
+        # Labels STACKED in the clear zone above bus-1 (no VT/riser overlap)
         def label(txt, y_above):
-            yy = (self.bus1_y + 0.35) if y_above else (self.bus2_y - 0.55)
+            yy = (self.bus1_y + 0.85) if y_above else (self.bus1_y + 0.35)
             ax.text(bl, yy, txt, fontsize=fs + 2, color='black',
                     fontweight='bold', ha='left', va='center')
 
@@ -556,101 +555,103 @@ class SLDRenderer:
     # PAGE FURNITURE (cm coordinates, true scale)
     # ------------------------------------------------------------------
     def _mini(self, pg, key, cx, cy):
-        """Small legend glyphs (~1.5 cm) drawn on the page axes."""
+        """Compact HORIZONTAL legend glyphs (~1.6 cm wide) — rotated so the
+        conductor runs left-to-right, giving a neat low-height row."""
         LWm = 0.9
 
         def ln(x1, y1, x2, y2):
             pg.plot([x1, x2], [y1, y2], color='black', linewidth=LWm)
 
         if key == 'isolator':
-            ln(cx, cy + 0.75, cx, cy + 0.26)
-            pg.add_patch(mpatches.Arc((cx, cy + 0.2), 0.12, 0.12,
+            ln(cx - 0.8, cy, cx - 0.28, cy)
+            pg.add_patch(mpatches.Arc((cx - 0.22, cy), 0.12, 0.12,
                                       angle=0, theta1=0, theta2=360,
                                       color='black', linewidth=LWm))
-            pg.add_patch(mpatches.Arc((cx, cy - 0.2), 0.12, 0.12,
+            pg.add_patch(mpatches.Arc((cx + 0.22, cy), 0.12, 0.12,
                                       angle=0, theta1=0, theta2=360,
                                       color='black', linewidth=LWm))
-            ln(cx - 0.17, cy - 0.15, cx + 0.17, cy + 0.15)
-            ln(cx, cy - 0.26, cx, cy - 0.75)
+            ln(cx - 0.18, cy - 0.16, cx + 0.2, cy + 0.16)  # open blade
+            ln(cx + 0.28, cy, cx + 0.8, cy)
         elif key == 'earth':
-            ln(cx, cy + 0.6, cx, cy - 0.05)
-            ln(cx - 0.3, cy - 0.05, cx + 0.3, cy - 0.05)
-            ln(cx - 0.2, cy - 0.22, cx + 0.2, cy - 0.22)
-            ln(cx - 0.1, cy - 0.39, cx + 0.1, cy - 0.39)
+            ln(cx - 0.8, cy, cx - 0.05, cy)
+            ln(cx - 0.2, cy + 0.16, cx + 0.15, cy - 0.16)  # blade
+            ln(cx + 0.25, cy + 0.28, cx + 0.25, cy - 0.28)
+            ln(cx + 0.4, cy + 0.18, cx + 0.4, cy - 0.18)
+            ln(cx + 0.55, cy + 0.09, cx + 0.55, cy - 0.09)
         elif key == 'breaker':
-            pg.add_patch(mpatches.Rectangle((cx - 0.2, cy - 0.3), 0.4, 0.6,
+            pg.add_patch(mpatches.Rectangle((cx - 0.3, cy - 0.2), 0.6, 0.4,
                                             fill=False, edgecolor='black',
                                             linewidth=LWm))
-            ln(cx, cy + 0.3, cx, cy + 0.75)
-            ln(cx, cy - 0.3, cx, cy - 0.75)
+            ln(cx - 0.8, cy, cx - 0.3, cy)
+            ln(cx + 0.3, cy, cx + 0.8, cy)
         elif key == 'ct':
-            ln(cx, cy + 0.7, cx, cy - 0.7)
-            pg.add_patch(mpatches.Arc((cx + 0.02, cy + 0.18), 0.35, 0.55,
-                                      angle=0, theta1=80, theta2=280,
+            ln(cx - 0.8, cy, cx + 0.8, cy)
+            pg.add_patch(mpatches.Arc((cx - 0.16, cy + 0.02), 0.5, 0.32,
+                                      angle=90, theta1=80, theta2=280,
                                       color='black', linewidth=LWm))
-            pg.add_patch(mpatches.Arc((cx + 0.02, cy - 0.18), 0.35, 0.55,
-                                      angle=0, theta1=80, theta2=280,
+            pg.add_patch(mpatches.Arc((cx + 0.16, cy + 0.02), 0.5, 0.32,
+                                      angle=90, theta1=80, theta2=280,
                                       color='black', linewidth=LWm))
         elif key == 'cvt':
-            ln(cx - 0.3, cy + 0.75, cx - 0.3, cy + 0.45)
-            ln(cx - 0.6, cy + 0.45, cx, cy + 0.45)
-            ln(cx - 0.6, cy + 0.33, cx, cy + 0.33)
-            ln(cx - 0.3, cy + 0.33, cx - 0.3, cy + 0.05)
-            ln(cx - 0.6, cy + 0.05, cx, cy + 0.05)
-            ln(cx - 0.6, cy - 0.07, cx, cy - 0.07)
-            ln(cx - 0.3, cy - 0.07, cx - 0.3, cy - 0.3)
-            pg.add_patch(mpatches.Arc((cx - 0.3, cy - 0.55), 0.5, 0.5,
-                                      angle=0, theta1=0, theta2=360,
-                                      color='black', linewidth=LWm))
-            pg.add_patch(mpatches.Arc((cx + 0.25, cy - 0.55), 0.36, 0.36,
-                                      angle=0, theta1=0, theta2=360,
-                                      color='black', linewidth=LWm))
+            # horizontal: two capacitor plates then winding coil
+            ln(cx - 0.8, cy, cx - 0.45, cy)
+            ln(cx - 0.45, cy + 0.28, cx - 0.45, cy - 0.28)
+            ln(cx - 0.33, cy + 0.28, cx - 0.33, cy - 0.28)
+            ln(cx - 0.33, cy, cx - 0.05, cy)
+            ln(cx - 0.05, cy + 0.28, cx - 0.05, cy - 0.28)
+            ln(cx + 0.07, cy + 0.28, cx + 0.07, cy - 0.28)
+            ln(cx + 0.07, cy, cx + 0.3, cy)
+            for k in range(3):
+                pg.add_patch(mpatches.Arc((cx + 0.3 + k * 0.16, cy),
+                                          0.22, 0.16, angle=90,
+                                          theta1=80, theta2=280,
+                                          color='black', linewidth=LWm))
         elif key == 'vt':
-            # Match drawing bus-VT: winding arcs (CVT style w/o caps)
-            ln(cx, cy + 0.75, cx, cy + 0.45)
-            ln(cx, cy + 0.45, cx + 0.1, cy + 0.45)
-            pg.add_patch(mpatches.Arc((cx + 0.1, cy + 0.33), 0.16, 0.24,
-                                      angle=0, theta1=270, theta2=90,
+            # match bus-VT: bushing arcs + winding coil, horizontal
+            ln(cx - 0.8, cy, cx - 0.45, cy)
+            pg.add_patch(mpatches.Arc((cx - 0.33, cy), 0.22, 0.16,
+                                      angle=0, theta1=180, theta2=360,
                                       color='black', linewidth=LWm))
-            pg.add_patch(mpatches.Arc((cx + 0.1, cy + 0.57), 0.16, 0.24,
-                                      angle=0, theta1=270, theta2=90,
+            pg.add_patch(mpatches.Arc((cx - 0.09, cy), 0.22, 0.16,
+                                      angle=0, theta1=180, theta2=360,
                                       color='black', linewidth=LWm))
-            ln(cx + 0.28, cy + 0.72, cx + 0.28, cy - 0.2)
+            ln(cx + 0.05, cy + 0.28, cx + 0.05, cy - 0.28)
             for k in range(4):
-                pg.add_patch(mpatches.Arc((cx + 0.42, cy + 0.35 - k * 0.22),
-                                          0.16, 0.22, angle=0,
+                pg.add_patch(mpatches.Arc((cx + 0.2 + k * 0.16, cy),
+                                          0.22, 0.16, angle=90,
                                           theta1=80, theta2=280,
                                           color='black', linewidth=LWm))
         elif key == 'la':
-            ln(cx + 0.35, cy, cx + 0.8, cy)
-            pg.add_patch(mpatches.Rectangle((cx - 0.35, cy - 0.25), 0.7, 0.5,
+            ln(cx - 0.8, cy, cx - 0.35, cy)
+            pg.add_patch(mpatches.Rectangle((cx - 0.35, cy - 0.22), 0.6, 0.44,
                                             fill=False, edgecolor='black',
                                             linewidth=LWm))
             pg.add_patch(mpatches.Polygon(
-                [[cx + 0.15, cy + 0.12], [cx - 0.15, cy],
-                 [cx + 0.15, cy - 0.12]],
+                [[cx + 0.12, cy + 0.13], [cx - 0.18, cy],
+                 [cx + 0.12, cy - 0.13]],
                 closed=True, fill=True, color='black', linewidth=LWm))
-            ln(cx - 0.35, cy, cx - 0.7, cy)
-            ln(cx - 0.7, cy + 0.2, cx - 0.7, cy - 0.2)
-            ln(cx - 0.78, cy + 0.13, cx - 0.78, cy - 0.13)
-            ln(cx - 0.86, cy + 0.07, cx - 0.86, cy - 0.07)
+            ln(cx + 0.25, cy, cx + 0.5, cy)
+            ln(cx + 0.5, cy + 0.22, cx + 0.5, cy - 0.22)
+            ln(cx + 0.6, cy + 0.14, cx + 0.6, cy - 0.14)
+            ln(cx + 0.7, cy + 0.07, cx + 0.7, cy - 0.07)
         elif key == 'ict':
-            ln(cx, cy + 0.75, cx, cy + 0.5)
-            pg.add_patch(mpatches.Arc((cx, cy + 0.22), 0.56, 0.56,
+            # two overlapping windings side-by-side (horizontal)
+            ln(cx - 0.8, cy, cx - 0.5, cy)
+            pg.add_patch(mpatches.Arc((cx - 0.22, cy), 0.56, 0.56,
                                       angle=0, theta1=0, theta2=360,
                                       color='black', linewidth=LWm))
-            pg.add_patch(mpatches.Arc((cx, cy - 0.14), 0.44, 0.44,
+            pg.add_patch(mpatches.Arc((cx + 0.16, cy), 0.44, 0.44,
                                       angle=0, theta1=0, theta2=360,
                                       color='black', linewidth=LWm))
-            ln(cx, cy - 0.36, cx, cy - 0.7)
+            ln(cx + 0.38, cy, cx + 0.8, cy)
         elif key == 'reactor':
-            ln(cx, cy + 0.75, cx, cy + 0.5)
+            ln(cx - 0.8, cy, cx - 0.5, cy)
             for k in range(3):
-                pg.add_patch(mpatches.Arc((cx, cy + 0.3 - k * 0.25),
-                                          0.35, 0.5, angle=0,
+                pg.add_patch(mpatches.Arc((cx - 0.3 + k * 0.25, cy),
+                                          0.5, 0.35, angle=90,
                                           theta1=60, theta2=300,
                                           color='black', linewidth=LWm))
-            ln(cx, cy - 0.42, cx, cy - 0.7)
+            ln(cx + 0.45, cy, cx + 0.8, cy)
 
     def _draw_legend(self, pg):
         """Legend as bordered tables, bottom-left (SYMBOL | DESCRIPTION)."""
@@ -665,8 +666,8 @@ class SLDRenderer:
               ('la', "LIGHTNING ARRESTOR"),
               ('ict', "POWER TRANSFORMER (ICT)"),
               ('reactor', "SHUNT REACTOR")]
-        row_h = 1.45
-        top = 9.8
+        row_h = 1.15
+        top = 9.6
 
         def table(x0, x1, items):
             n = len(items)
@@ -757,11 +758,19 @@ class SLDRenderer:
 
         bays = self._build_bays()
         n = max(len(bays), 1)
-        x_end_est = self.x_start + n * self.gap + 0.5
         self.fs = 5  # constant — bay size is now fixed on paper
 
+        # True right end (mirrors left margin) — same formula as _draw_buses
+        x_end_calc = (self.x_start + (n - 1) * self.gap
+                      + (self.x_start - self.bus_left)
+                      + (0.5 if self.is_double else 0.0))
+        # Symmetric drawing window → SLD centered in its panel
+        margin = 1.2
+        self._dx0 = self.bus_left - margin
+        self._dx1 = x_end_calc + margin
+
         # -- ADAPTIVE PAGE: fixed bay dimensions, width grows with bays --
-        panel_w = x_end_est * SLD_SX
+        panel_w = (self._dx1 - self._dx0) * SLD_SX
         panel_h = 18.2 * SLD_SY
         page_w = max(PAGE_MIN_W, panel_w + 2.4)
         self.page_w = page_w
@@ -803,7 +812,7 @@ class SLDRenderer:
                 self._bay_coupler(ax, x, name, cpl_i)
             self.bays_drawn.append((btype, num, name))
 
-        dx0, dx1 = 0.5, x_end + 0.5
+        dx0, dx1 = self._dx0, self._dx1
         dy0, dy1 = -5.6, 12.6
         ax.set_xlim(dx0, dx1)
         ax.set_ylim(dy0, dy1)
