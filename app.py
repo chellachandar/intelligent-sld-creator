@@ -253,7 +253,7 @@ with st.sidebar:
 
     # Drawing details (title block)
     st.markdown("**Drawing Details (Title Block)**")
-    with st.expander("Client / Project / Drg.No"):
+    with st.expander("Client / Project / Drg.No", expanded=True):
         tb_client = st.text_input("Client", "", key="tb_client")
         tb_project = st.text_input("Project", "", key="tb_project")
         tb_drawn = st.text_input("Drawn By", "", key="tb_drawn")
