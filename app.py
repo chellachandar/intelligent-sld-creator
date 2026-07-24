@@ -333,7 +333,8 @@ with tab1:
                     if lv_voltage
                     else f"{int(hv_voltage)}kV Standard Substation"
                 )
-                params = SLDGenerationParams(
+                import dataclasses as _dc
+                _raw = dict(
                     substation_name=substation_name.strip() or auto_name,
                     hv_voltage=float(hv_voltage),
                     lv_voltage=float(lv_voltage) if lv_voltage else None,
@@ -360,6 +361,15 @@ with tab1:
                     tx_vg=tx_vg,
                     reactor_mvar=reactor_mvar
                 )
+                _valid = {f.name for f in _dc.fields(SLDGenerationParams)}
+                _dropped = [k for k in _raw if k not in _valid]
+                if _dropped:
+                    st.warning(
+                        "⚠️ Deployed engine is older than the UI — ignored "
+                        f"inputs: {', '.join(_dropped)}. Upload the latest "
+                        "sld_renderer.py to GitHub to enable them.")
+                params = SLDGenerationParams(
+                    **{k: v for k, v in _raw.items() if k in _valid})
 
                 # Generate SLD
                 fig, renderer = generate_sld(params)
